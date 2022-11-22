@@ -14,6 +14,12 @@ data = read.csv("./ufc_data.csv")
 
 **Preliminary clean**
 
+Since a lot of weight classes that ufc has today were established after 2000, we drop all the fights before 2000.
+
+```{r}
+data = data[1:5809, ]
+```
+
 We drop some columns based on background knowledge
 
 ```{r}
@@ -37,7 +43,7 @@ w_col = sapply(colnames(data_reduced), str_detect, regex("Weight"))
 data_reduced = data_reduced[, !(w_col)]
 ```
 
-Since "draw" rarely happens, almost every element in the column equals 0, so we can drop "draw" column.
+Since "draw" rarely happens, almost every element in the column equals 0, so we can drop the columns of recorded draw..
 
 ```{r}
 # Drop weight column
@@ -45,9 +51,29 @@ draw_col = sapply(colnames(data_reduced), str_detect, regex("draw"))
 data_reduced = data_reduced[, !(draw_col)]
 ```
 
-**Check relationship between columns based on background knowledge**
+Now we check the proportion of each level in "Winner".
 
-Check correlation between strikes "landed" and "attempted"
+```{r, results='hold'}
+n = nrow(data_reduced)
+winner_type = levels(as.factor(data_reduced$Winner))
+winner_percent = 100*table(data_reduced$Winner)/n
+winner_lab = paste(winner_type, ": ", winner_percent, sep='')
+winner_lab <- paste(winner_lab, '%', sep='')
+
+pie(table(data_reduced$Winner),labels=winner_lab, main='Pie chart with percentage of Winner types')
+```
+
+We found an interesting fact that more fighters in red corner in comparison with blue corner.
+
+Another fact is that the fights ending in a draw only account for less than 2%, so we drop all the rows whose "Winner" column is draw.
+
+```{r}
+data_reduced = data_reduced[data_reduced$Winner != "Draw",]
+```
+
+**Check correlated columns based on background knowledge**
+
+Check correlation between strikes "landed" and "attempted" because these two should be strongly correlated with each other.
 
 ```{r}
 par(mfrow = c(2, 2))
@@ -89,6 +115,24 @@ for(i in 1:length(str_types)){
 }
 ```
 
+Also, since number of significant strikes might be strongly correlated number of total strikes, we check the correlation of them as well.
+
+```{r}
+par(mfrow=c(2, 2))
+plot(data_reduced$B_avg_TOTAL_STR_landed, data_reduced$B_avg_SIG_STR_landed)
+plot(data_reduced$R_avg_TOTAL_STR_landed, data_reduced$R_avg_SIG_STR_landed)
+cor(data_reduced$B_avg_SIG_STR_landed, data_reduced$B_avg_TOTAL_STR_landed)
+cor(data_reduced$R_avg_SIG_STR_landed, data_reduced$R_avg_TOTAL_STR_landed)
+```
+
+We can see a clear linear relationship between these two, plus number of total strikes is not as important as number of significant strikes, so we drop the number of total strikes.
+
+```{r}
+# Drop columns of # of total strikes
+tot_col = sapply(colnames(data_reduced), str_detect, regex("TOTAL_STR"))
+data_reduced = data_reduced[, !(tot_col)]
+```
+
 Now we check correlation between takedowns "landed" and "attempted"
 
 ```{r}
@@ -97,3 +141,52 @@ cor(data_reduced$B_avg_TD_att, data_reduced$B_avg_TD_landed)
 ```
 
 There's also a clear linear relationship between TD attempted and TD landed, but the variance is also obvious, so we adopt a conservative attitude about dropping it.
+
+Also, common sense suggests that the height of one person should be related to his reach, we check these two columns.
+
+```{r}
+par(mfrow = c(2, 2))
+plot(data_reduced$B_Height_cms, data_reduced$B_Reach_cms)
+plot(data_reduced$R_Height_cms, data_reduced$R_Reach_cms)
+cor(data_reduced$B_Height_cms, data_reduced$B_Reach_cms)
+cor(data_reduced$R_Height_cms, data_reduced$R_Reach_cms)
+```
+
+The plots and correlations suggest the same. We now drop the height since it should be somewhat less important than the reach in fighting.
+
+```{r}
+# Drop columns of # of total strikes
+tot_col = sapply(colnames(data_reduced), str_detect, regex("Height"))
+data_reduced = data_reduced[, !(tot_col)]
+```
+
+**Getting rid of multicollinearity between columns (NN & Decision Tree can ignore this part)**
+
+Since some of the columns in the data are the sum of some other columns, we have to remove them so that statistical regression can work.
+
+The first one is "significant strikes landed". Basically it is the sum of strikes landed in every position. (distance, clinch, ground), so we have to remove it. Also, since the sum of strikes landed on every body part (head, body, leg) also sums up to "significant strikes landed", we'll have to choose between position and body part.
+
+```{r}
+# Remove columns of sig strikes landed
+sig_landed_col = sapply(colnames(data_reduced), str_detect, regex("SIG_STR_landed"))
+data_reduced = data_reduced[, !(sig_landed_col)]
+```
+
+```{r}
+# Remove strikes landed on each body part or (in each position)
+#str_types = c("DISTANCE", "CLINCH", "GROUND")
+str_types = c("HEAD", "BODY", "LEG")
+for(i in 1:length(str_types)){
+  str = paste(str_types[i], "_landed", sep="")
+  att_col = sapply(colnames(data_reduced), str_detect, regex(str))
+  data_reduced = data_reduced[, !(att_col)]
+}
+```
+
+Another one is "wins" column. It is the sum of all types of wins, so we also have to remove it.
+
+```{r}
+# Remove columns of wins
+wins_col = sapply(colnames(data_reduced), str_detect, regex("_wins$"))
+data_reduced = data_reduced[, !(wins_col)]
+```
