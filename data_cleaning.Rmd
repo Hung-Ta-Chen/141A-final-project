@@ -190,3 +190,48 @@ Another one is "wins" column. It is the sum of all types of wins, so we also hav
 wins_col = sapply(colnames(data_reduced), str_detect, regex("_wins$"))
 data_reduced = data_reduced[, !(wins_col)]
 ```
+
+**Merge columns**
+
+We cam merge "current win streak" and "current lose streak" into one column "current streak", and positive number stands for winning streak and negative number stands for losing streak.
+
+```{r}
+party = c("B", "R")
+# Add two new merged columns
+for(p in party){
+  if(p == "B"){
+    B_current_streak = data_reduced$B_current_win_streak + (-1)*data_reduced$B_current_lose_streak
+    data_reduced = cbind(data_reduced, B_current_streak)
+  }else{
+    R_current_streak = data_reduced$R_current_win_streak + (-1)*data_reduced$R_current_lose_streak
+    data_reduced = cbind(data_reduced, R_current_streak)
+  }
+}
+
+# Remove original columns
+streak_drop = c("B_current_win_streak", "B_current_lose_streak", "R_current_win_streak", "R_current_lose_streak")
+data_reduced = data_reduced[, !(colnames(data_reduced) %in% streak_drop)]
+```
+
+Also, since win by majority decision and win by split decision rarely happened, basically we can merge three kind of decision win into one column "win by decision".
+
+```{r}
+decision_type = c("Majority", "Split", "Unanimous")
+# Sum up num of three kind of decision wins of B
+B_win_by_Decision = numeric(nrow(data_reduced))
+for(type in decision_type){
+  B_win_by_Decision = B_win_by_Decision + data_reduced[, paste("B_win_by_Decision_", type, sep = "")]
+}
+data_reduced = cbind(data_reduced, B_win_by_Decision)
+
+# Sum up num of three kind of decision wins of R
+R_win_by_Decision = numeric(nrow(data_reduced))
+for(type in decision_type){
+  R_win_by_Decision = R_win_by_Decision + data_reduced[, paste("R_win_by_Decision_", type, sep = "")]
+}
+data_reduced = cbind(data_reduced, R_win_by_Decision)
+
+# Remove original columns
+dec_col = sapply(colnames(data_reduced), str_detect, regex("win_by_Decision_"))
+data_reduced = data_reduced[, !(dec_col)]
+```
