@@ -1,0 +1,99 @@
+---
+title: "Data Preprocessing"
+author: "HungTa Chen"
+date: "2022-11-22"
+output: html_document
+---
+
+**Read in data**
+
+```{r}
+# Read the file
+data = read.csv("./ufc_data.csv")
+```
+
+**Preliminary clean**
+
+We drop some columns based on background knowledge
+
+```{r}
+# Drop some irrelevent columns
+drop = c("R_fighter", "B_fighter", "Referee", "date", "location", "title_bout")
+data_reduced = data[, !(colnames(data) %in% drop)]
+
+# Drop columns related to previous opponents
+opp_col = sapply(colnames(data_reduced), str_detect, regex("opp"))
+data_reduced = data_reduced[, !(opp_col)]
+
+# Omit rows with NA
+data_reduced = na.omit(data_reduced)
+```
+
+Since in most cases both fighters fight in the same weight class, we can also drop "Weight" column.
+
+```{r}
+# Drop weight column
+w_col = sapply(colnames(data_reduced), str_detect, regex("Weight"))
+data_reduced = data_reduced[, !(w_col)]
+```
+
+Since "draw" rarely happens, almost every element in the column equals 0, so we can drop "draw" column.
+
+```{r}
+# Drop weight column
+draw_col = sapply(colnames(data_reduced), str_detect, regex("draw"))
+data_reduced = data_reduced[, !(draw_col)]
+```
+
+**Check relationship between columns based on background knowledge**
+
+Check correlation between strikes "landed" and "attempted"
+
+```{r}
+par(mfrow = c(2, 2))
+#num_cols= logical(0)
+#for(i in 1:ncol(data_reduced)){
+#  num_cols = append(num_cols, is.numeric(data_reduced[,i]))
+#}
+plot(data_reduced$B_avg_SIG_STR_att, data_reduced$B_avg_SIG_STR_landed)
+plot(data_reduced$B_avg_TOTAL_STR_att, data_reduced$B_avg_TOTAL_STR_landed)
+plot(data_reduced$B_avg_HEAD_att, data_reduced$B_avg_HEAD_landed)
+plot(data_reduced$B_avg_BODY_att, data_reduced$B_avg_BODY_landed)
+cor(data_reduced$B_avg_SIG_STR_att, data_reduced$B_avg_SIG_STR_landed)
+cor(data_reduced$B_avg_TOTAL_STR_att, data_reduced$B_avg_TOTAL_STR_landed)
+cor(data_reduced$B_avg_HEAD_att, data_reduced$B_avg_HEAD_landed)
+cor(data_reduced$B_avg_BODY_att, data_reduced$B_avg_BODY_landed)
+```
+
+```{r}
+par(mfrow = c(2, 2))
+plot(data_reduced$B_avg_LEG_att, data_reduced$B_avg_LEG_landed)
+plot(data_reduced$B_avg_DISTANCE_att, data_reduced$B_avg_DISTANCE_landed)
+plot(data_reduced$B_avg_CLINCH_att, data_reduced$B_avg_CLINCH_landed)
+plot(data_reduced$B_avg_GROUND_att, data_reduced$B_avg_GROUND_landed)
+cor(data_reduced$B_avg_LEG_att, data_reduced$B_avg_LEG_landed)
+cor(data_reduced$B_avg_DISTANCE_att, data_reduced$B_avg_DISTANCE_landed)
+cor(data_reduced$B_avg_CLINCH_att, data_reduced$B_avg_CLINCH_landed)
+cor(data_reduced$B_avg_GROUND_att, data_reduced$B_avg_GROUND_landed)
+```
+
+We can see that any kind of "strikes attempted" is extremely highly correlated to its corresponding "strikes landed", therefore we remove every "strikes attempted" column.
+
+```{r}
+# Drop "strikes attempted" columns 
+str_types = c("STR", "HEAD", "BODY", "LEG", "DISTANCE", "CLINCH", "GROUND")
+for(i in 1:length(str_types)){
+  str = paste(str_types[i], "_att", sep="")
+  att_col = sapply(colnames(data_reduced), str_detect, regex(str))
+  data_reduced = data_reduced[, !(att_col)]
+}
+```
+
+Now we check correlation between takedowns "landed" and "attempted"
+
+```{r}
+plot(data_reduced$B_avg_TD_att, data_reduced$B_avg_TD_landed)
+cor(data_reduced$B_avg_TD_att, data_reduced$B_avg_TD_landed)
+```
+
+There's also a clear linear relationship between TD attempted and TD landed, but the variance is also obvious, so we adopt a conservative attitude about dropping it.
