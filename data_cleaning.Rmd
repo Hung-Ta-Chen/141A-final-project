@@ -83,6 +83,9 @@ data_switch$Winner[red_idx] = "Blue"
 
 # Concat the two dataframes
 data_reduced = rbind(data_reduced, data_switch)
+
+
+
 ```
 
 ```{r, results='hold'}
@@ -164,7 +167,13 @@ plot(data_reduced$B_avg_TD_att, data_reduced$B_avg_TD_landed)
 cor(data_reduced$B_avg_TD_att, data_reduced$B_avg_TD_landed)
 ```
 
-There's also a clear linear relationship between TD attempted and TD landed, but the variance is also obvious, so we adopt a conservative attitude about dropping it.
+There's also a clear linear relationship between TD attempted and TD landed.
+
+```{r}
+# Drop columns of # of TD landed
+td_land_col = sapply(colnames(data_reduced), str_detect, regex("TD_landed"))
+data_reduced = data_reduced[, !(td_land_col)]
+```
 
 Also, common sense suggests that the height of one person should be related to his reach, we check these two columns.
 
@@ -197,7 +206,7 @@ data_reduced = data_reduced[, !(sig_landed_col)]
 ```
 
 ```{r}
-# Remove strikes landed on each body part or (in each position)
+#Remove strikes landed on each body part or (in each position)
 #str_types = c("DISTANCE", "CLINCH", "GROUND")
 str_types = c("HEAD", "BODY", "LEG")
 for(i in 1:length(str_types)){
@@ -264,11 +273,11 @@ data_reduced = data_reduced[, !(dec_col)]
 
 ```{r}
 # For ML methods
-# data_reduced = data_reduced[, c(1:27, 53, 55, 57, 28:52, 54, 56, 58)]
-# filename = "data_ML.csv"
+#data_reduced = data_reduced[, c(1:26, 51, 53, 55, 27:50, 52, 54, 56)]
+#filename = "data_ML.csv"
 
 # For statistical learning methods
-data_reduced = data_reduced[, c(1:22, 43, 45, 47, 23:42, 44, 46, 48)]
+data_reduced = data_reduced[, c(1:21, 41, 43, 45, 22:40, 42, 44, 46)]
 #filename = "data_body_logit.csv"
 filename = "data_position_logit.csv"
 write.csv(data_reduced, filename, row.names = FALSE)
