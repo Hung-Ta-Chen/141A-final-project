@@ -15,10 +15,17 @@ data = read.csv("./ufc_data.csv")
 
 **Preliminary clean**
 
-Since a lot of weight classes that ufc has today were established after 2000, we drop all the fights before 2000.
+Since a lot of weight classes that ufc has today were established after 2000, we drop all the fights before 2000. Also, all winners are recorded as red side before March 2010, which makes the data imbalance. Therefore, we drop all observations before that.
 
 ```{r}
-data = data[1:5809, ]
+data = data[1:4727, ]
+```
+
+Also, we remove the fights between fighters who has less than three fights in UFC, since those fights don't have much reference value.
+
+```{r}
+newcomer_fights = which(((data$B_wins+data$B_losses) <= 3) | ((data$R_wins+data$R_losses) <= 3))
+data = data[(-1)*newcomer_fights, ]
 ```
 
 We drop some columns based on background knowledge
@@ -64,8 +71,6 @@ winner_lab <- paste(winner_lab, '%', sep='')
 pie(table(data_reduced$Winner),labels=winner_lab, main='Pie chart with percentage of Winner types')
 ```
 
-We found an interesting fact that more fighters in red corner win in comparison with blue corner. This is actually all winners before 2010 are recorded as red. We don't want this kind of unbalanced response variable, so we will switch the two sides and use them as new observations.
-
 Another fact is that the fights ending in a draw only account for less than 2%, so we drop all the rows whose "Winner" column is draw.
 
 ```{r}
@@ -73,16 +78,16 @@ data_reduced = data_reduced[data_reduced$Winner != "Draw",]
 ```
 
 ```{r}
-# Copy the entire dataset and swap everything related to Red and Blue
-data_switch = data_reduced[, c(1, 2, 43:82, 3:42, 83, 84)]
-colnames(data_switch) = colnames(data_reduced)
-blue_idx = data_reduced$Winner == "Blue"
-red_idx = data_reduced$Winner == "Red"
-data_switch$Winner[blue_idx] = "Red"
-data_switch$Winner[red_idx] = "Blue"
-
-# Concat the two dataframes
-data_reduced = rbind(data_reduced, data_switch)
+# # Copy the entire dataset and swap everything related to Red and Blue
+# data_switch = data_reduced[, c(1, 2, 43:82, 3:42, 83, 84)]
+# colnames(data_switch) = colnames(data_reduced)
+# blue_idx = data_reduced$Winner == "Blue"
+# red_idx = data_reduced$Winner == "Red"
+# data_switch$Winner[blue_idx] = "Red"
+# data_switch$Winner[red_idx] = "Blue"
+# 
+# # Concat the two dataframes
+# data_reduced = rbind(data_reduced, data_switch)
 
 
 
@@ -207,8 +212,8 @@ data_reduced = data_reduced[, !(sig_landed_col)]
 
 ```{r}
 #Remove strikes landed on each body part or (in each position)
-#str_types = c("DISTANCE", "CLINCH", "GROUND")
-str_types = c("HEAD", "BODY", "LEG")
+str_types = c("DISTANCE", "CLINCH", "GROUND")
+#str_types = c("HEAD", "BODY", "LEG")
 for(i in 1:length(str_types)){
   str = paste(str_types[i], "_landed", sep="")
   att_col = sapply(colnames(data_reduced), str_detect, regex(str))
@@ -273,12 +278,26 @@ data_reduced = data_reduced[, !(dec_col)]
 
 ```{r}
 # For ML methods
-#data_reduced = data_reduced[, c(1:26, 51, 53, 55, 27:50, 52, 54, 56)]
-#filename = "data_ML.csv"
+# data_reduced = data_reduced[, c(1:26, 51, 53, 55, 27:50, 52, 54, 56)]
+# filename = "data_ML.csv"
 
 # For statistical learning methods
 data_reduced = data_reduced[, c(1:21, 41, 43, 45, 22:40, 42, 44, 46)]
-#filename = "data_body_logit.csv"
-filename = "data_position_logit.csv"
+filename = "data_body_logit.csv"
+#filename = "data_position_logit.csv"
+```
+
+To reduce the complexity of data, we decide to remove some more columns here.
+
+```{r}
+# Delete some more columns here
+drop_col = c("avg_SIG_STR_pct", "avg_TD_pct", "REV", "total_time_fought", "total_round_fought", "Stance")
+for(i in 1:length(drop_col)){
+  att_col = sapply(colnames(data_reduced), str_detect, regex(drop_col[i]))
+  data_reduced = data_reduced[, !(att_col)]
+}
+```
+
+```{r}
 write.csv(data_reduced, filename, row.names = FALSE)
 ```

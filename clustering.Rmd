@@ -1,0 +1,55 @@
+---
+title: "data for clustering"
+author: "HungTa Chen"
+date: "2022-12-03"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+**Read in data**
+
+```{r}
+data = read.csv("./data_ML.csv")
+```
+
+**Extract attributes related to fighters' fighting style**
+
+```{r}
+fighting_stats_col = 3:16
+fighting_stats = data[, fighting_stats_col]
+```
+
+**Import required packages**
+
+```{r}
+library(tidyverse)
+library(cluster)
+library(factoextra)
+library(dendextend)
+library(stats)
+```
+
+**Standardize the data for clustering**
+
+```{r}
+fight_stats = scale(fighting_stats)
+```
+
+**Hierarchical clustering**
+
+```{r, results='hold'}
+# Complete
+hc1 = agnes(fight_stats, method = "complete")
+hc1$ac
+pltree(hc1, cex=0.6, main = "Dendogram of agnes (complete)")
+```
+
+```{r}
+# Ward
+hc2 = agnes(fight_stats, method = "ward")
+hc2$ac
+pltree(hc2, cex=0.6, main = "Dendogram of agnes (ward)")
+```
