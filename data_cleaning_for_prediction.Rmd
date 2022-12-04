@@ -291,7 +291,7 @@ To reduce the complexity of data, we decide to remove some more columns here.
 
 ```{r}
 # Delete some more columns here
-drop_col = c("avg_SIG_STR_pct", "avg_TD_pct", "REV", "total_time_fought", "total_round_fought", "Stance")
+drop_col = c("avg_SIG_STR_pct", "avg_TD_pct", "REV", "total_time_fought", "total_rounds_fought", "Stance")
 for(i in 1:length(drop_col)){
   att_col = sapply(colnames(data_reduced), str_detect, regex(drop_col[i]))
   data_reduced = data_reduced[, !(att_col)]
