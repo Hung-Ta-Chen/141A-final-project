@@ -243,18 +243,6 @@ drop_col = sapply(colnames(data_reduced), str_detect, regex("avg_SIG_STR_landed|
 data_reduced = data_reduced[, !(drop_col)]
 ```
 
-**Getting rid of linear dependancy between columns**
-
-Since some of the columns in the data are the sum of some other columns, we have to remove them so that statistical regression can work.
-
-One is "wins" column. It is the sum of all types of wins, so we have to remove it.
-
-```{r}
-# Remove columns of wins
-# wins_col = sapply(colnames(data_reduced), str_detect, regex("_wins$"))
-# data_reduced = data_reduced[, !(wins_col)]
-```
-
 **Merge columns**
 
 We cam merge "current win streak" and "current lose streak" into one column "current streak", and positive number stands for winning streak and negative number stands for losing streak.
@@ -321,8 +309,8 @@ for(i in 1:nrow(data_reduced)){
 }
 
 for(i in c(1:20, 23:25)){
-  boxplot(win_lose_data[,i], win_lose_data[, i+25], main=paste(strsplit(colnames(win_lose_data)[i], "_")[[1]][-1], sep=""), col=rainbow(2), outline=F)
-  cat(paste(strsplit(colnames(win_lose_data)[i], "_")[[1]][-1], sep=""))
+  boxplot(win_lose_data[,i], win_lose_data[, i+25], main=paste(strsplit(colnames(win_lose_data)[i], "_")[[1]][-1], collapse ="_"), col=rainbow(2), outline=F)
+  cat(paste(strsplit(colnames(win_lose_data)[i], "_")[[1]][-1], collapse ="_"))
   cat(sprintf(" ==> Winner: %f vs Loser: %f\n", median(win_lose_data[,i]), median(win_lose_data[, i+25])))
   # boxplot(win_lose_data[,i] - win_lose_data[, i+25], main=paste(strsplit(colnames(win_lose_data)[i], "_")[[1]][-1], sep=""), outline=F)
 }
@@ -347,6 +335,10 @@ data_reduced = data_reduced[, !(rm_col)]
 **Write the dataframe into csv file**
 
 ```{r}
+data_reduced = data_reduced[, c(1:26, 51, 53, 55, 27:50, 52, 54, 56)]
+```
+
+```{r}
 filename = "data_predict.csv"
-write.csv(data_reduced, filename, row.names = FALSE)
+#write.csv(data_reduced, filename, row.names = FALSE)
 ```

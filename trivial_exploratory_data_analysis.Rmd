@@ -1,0 +1,130 @@
+---
+title: "Some Other Exploratory Analysis"
+author: "HungTa Chen"
+date: "2022-12-06"
+output:
+  pdf_document: default
+  html_document: default
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+Just some other exploratory analysis on the data other than those I did in the cleaning part.
+
+**Read in data**
+
+```{r}
+# Read the file
+library(stringr)
+data = read.csv("./ufc_data.csv")
+data = data[1:4727, ]
+```
+
+**Remove irrelevant columns**
+
+```{r}
+# Drop some irrelevent columns
+drop = c("R_fighter", "B_fighter", "Referee", "date", "location", "title_bout")
+data_reduced = data[, !(colnames(data) %in% drop)]
+
+# Drop columns related to previous opponents
+opp_col = sapply(colnames(data_reduced), str_detect, regex("opp"))
+data_reduced = data_reduced[, !(opp_col)]
+
+# Omit rows with NA
+data_reduced = na.omit(data_reduced)
+
+data_reduced = data_reduced[, c(2, 3:44, 87, 45:86, 88)]
+```
+
+**Change the dimension of the data for further analysis**
+
+```{r}
+data_swap = data_reduced[, c(1, 45:87, 2:44)]
+combine_data = rbind(data_reduced, data_swap)
+combine_data = combine_data[, 1:44]
+
+for(i in 1:ncol(combine_data)){
+  if(str_detect(colnames(combine_data)[i], "^B")){
+    colnames(combine_data)[i] = paste(strsplit(colnames(combine_data)[i], "_")[[1]][-1], collapse="_")
+  }
+}
+
+# Drop the fighters who have less than three fights in ufc
+newcomer_fights = which((combine_data$wins+combine_data$losses) <= 3)
+combine_data = combine_data[(-1)*newcomer_fights, ]
+```
+
+As discovered in data cleaning part, the number of strikes attempt (takedown attempt also) is highly related to the number of strikes landed, so we can remove all columns of "attempt".
+
+```{r}
+# Drop "strikes attempted" columns 
+str_types = c("STR", "HEAD", "BODY", "LEG", "DISTANCE", "CLINCH", "GROUND")
+for(i in 1:length(str_types)){
+  str = paste(str_types[i], "_att", sep="")
+  att_col = sapply(colnames(combine_data), str_detect, regex(str))
+  combine_data = combine_data[, !(att_col)]
+}
+
+# Drop columns of # of TD landed
+td_land_col = sapply(colnames(data_reduced), str_detect, regex("TD_landed"))
+data_reduced = data_reduced[, !(td_land_col)]
+```
+
+```{r}
+# Merge some columns
+decision_type = c("Majority", "Split", "Unanimous")
+win_by_Decision = numeric(nrow(combine_data))
+for(type in decision_type){
+  win_by_Decision = win_by_Decision + combine_data[, paste("win_by_Decision_", type, sep = "")]
+}
+combine_data[, "win_by_Decision"] = win_by_Decision
+
+# Construct some new features
+combine_data[, "win_by_Decision_pct"] = combine_data$win_by_Decision/combine_data$wins
+combine_data[, "win_by_KO.TKO_pct"] = combine_data$win_by_KO.TKO/combine_data$wins
+combine_data[, "win_by_Submission_pct"] = combine_data$win_by_Submission/combine_data$wins
+```
+
+**Compare the stats between different weight classes**
+
+```{r}
+weight_classes =levels(as.factor(combine_data$weight_class))
+bw_stat = combine_data[combine_data$weight_class == "Bantamweight", ]
+fw_stat = combine_data[combine_data$weight_class == "Featherweight", ]
+flw_stat = combine_data[combine_data$weight_class == "Flyweight", ]
+hw_stat = combine_data[combine_data$weight_class == "Heavyweight", ]
+lhw_stat = combine_data[combine_data$weight_class == "LightHeavyweight", ]
+lw_stat = combine_data[combine_data$weight_class == "Lightweight", ]
+mw_stat = combine_data[combine_data$weight_class == "Middleweight", ]
+ww_stat = combine_data[combine_data$weight_class == "Welterweight", ]
+wbw_stat = combine_data[combine_data$weight_class == "WomenBantamweight", ]
+wflw_stat = combine_data[combine_data$weight_class == "WomenFlyweight", ]
+wsw_stat = combine_data[combine_data$weight_class == "WomenStrawweight", ]
+```
+
+```{r}
+for(i in c(2:19, 33, 34, 36, 38:40)){
+  boxplot(flw_stat[,i], bw_stat[,i], fw_stat[,i], lw_stat[,i], ww_stat[,i], mw_stat[,i], lhw_stat[,i], hw_stat[,i], main=colnames(fw_stat)[i], names=c("FLW", "BW", "FW", "LW", "WW", "MW", "LHW", "HW"), col=rainbow(8), outline=F)
+}
+```
+
+From the side-by-side boxplots above, we can see a lot of interesting facts.
+
+1.  The stereotype that Heavyweight fighters barely grapple (wrestling, jiu-jitsu, etc) is real.
+
+    We can see that Heavyweight has the lowest median in almost every stat related to grappling, including "*average takedown percentage*", "*average submission attempt*", "*average reverse*", "*average takedown landed*", "*average clinch strikes landed*", "*average control time*" and "*win by submission percentage*".
+
+    Actually according to the plots, higher weight classes (Middleweight, LightHeavyweight, Heavyweight) generally seem to perform worse in grappling division.
+
+2.  The power of one fighter must have something to do with their weight.
+
+    Firstly the concept that Heavyweight fighters have the most power in their hands is also true. We can see that Heavyweight has the highest "*average knockdown*" among all divisions. Moreover, Heavyweight has the highest "*win by KO/TKO percentage*" among all divisions (also has the lowest "*win by Decision percentage*"), actually it's way higher than other weight classes, which mean Heavyweight fighters frequently end the fight by knocking out their opponents (that's probably why they have the lowest "*average total time fought*" according to the plot).
+
+    In contrast, Flyweight has the lowest "*average knockdown*" and the lowest "*win by KO/TKO percentage*" (highest "*win by decision percentage*" also), which means Flyweight fighters really don't have enough power to hurt their opponent so that their fights also end in judge decision.
+
+    Additionally, we can actually see in the boxplots that higher weight class has higher "*win by KO/TKO percentage*" and lower "*win by decision percentage*", which further suggests the relationship between one's weight and power.
+
+3.  
