@@ -64,7 +64,7 @@ accuracy = function(label, pred){
 }
 ```
 
-```{r}
+```{r, results='hold'}
 pred_train = logistic_predict(fit, data.frame(X_train))
 acc = accuracy(Y_train, pred_train)
 cat(sprintf("Training accuracy: %f\n", acc))
@@ -86,7 +86,7 @@ forward_step$anova
 fit_optimal = glm(formula = Winner ~ B_age + R_age + R_avg_CTRL_time.seconds. + B_avg_TD_att + B_avg_SUB_ATT, family = binomial(link = "logit"), data = train_data)
 ```
 
-```{r}
+```{r, results='hold'}
 pred_train_o = logistic_predict(fit_optimal, data.frame(X_train))
 acc_o = accuracy(Y_train, pred_train_o)
 cat(sprintf("Training accuracy: %f\n", acc_o))
