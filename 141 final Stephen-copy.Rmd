@@ -1,0 +1,103 @@
+---
+title: "logistic regression"
+author: "Tianyue Xiao"
+date: "2022-12-6"
+output: html_document
+---
+
+**Logistic regression**
+```{r}
+mydata <- read.csv("/Users/THESUN/Downloads/141A-final-project-main/ufc_data.csv")
+head(mydata)
+str(mydata)
+mydata$B_avg_SUB_ATT <-factor(mydata$B_avg_SUB_ATT)
+mydata$Winner <-factor(mydata$Winner)
+library(ggplot2)
+ggplot(data=mydata,aes(x=R_avg_SUB_ATT,y=Winner))+geom_point()+stat_smooth(method="lm",se=TRUE)
+```
+
+
+
+```{r}
+library(tidyverse)
+mydata <- read.csv("/Users/THESUN/Downloads/141A-final-project-main/ufc_data.csv")
+mydata
+```
+#For B_avg_SUB_ATT
+
+```{r}
+mydata$Winner <-factor(mydata$Winner)
+model_logit <- glm(Winner~B_avg_SUB_ATT,
+  data = mydata,
+  family = binomial(link = "logit")
+)
+
+summary(model_logit)
+coef(model_logit)[2]
+```
+#For R_avg_SUB_ATT
+```{r}
+mydata$Winner <-factor(mydata$Winner)
+model_logit <- glm(Winner~R_avg_SUB_ATT,
+  data = mydata,
+  family = binomial(link = "logit")
+)
+
+summary(model_logit)
+coef(model_logit)[2]
+```
+
+
+#The log-odds scale for R_avg_SUB_ATT
+```{r}
+logit_log_odds <- broom::augment_columns(
+  model_logit,
+  data = mydata,
+  type.predict = c("link")
+) %>%
+  rename(log_odds = .fitted) 
+library(latex2exp)
+logit_log_odds %>% 
+    ggplot(aes(x = R_avg_SUB_ATT, y = log_odds)) +
+    geom_path(color = "#771C6D", size = 2) +
+    labs(title = "Log odds", 
+        subtitle = "This is linear!",
+        x = NULL,
+        y = TeX("$log \\frac{p}{1 - p}$")) +
+    theme_minimal() +
+    theme(
+      plot.title = element_text(face = "bold"),
+      axis.title.y = element_text(angle = 90)
+          )
+
+```
+
+#The odds scale
+```{r}
+exp(0.31314)
+exp(0.1129015)
+```
+
+```{r}
+logit_odds <- broom::augment_columns(
+  model_logit,
+  data = mydata,
+  type.predict = c("link")
+) %>%
+  rename(log_odds = .fitted) %>%
+  mutate(odds_ratio = exp(log_odds))
+logit_odds %>% 
+    ggplot(aes(x = R_avg_SUB_ATT, y = odds_ratio)) +
+    geom_line(color = "#FB9E07", size = 2) +
+    labs(title = "Odds", 
+        subtitle = "This is curvy, but it's a mathy transformation of a linear value",
+        x = NULL,
+        y = TeX("$\\frac{p}{1 - p}$")) +
+    theme_minimal() +
+    theme(
+      plot.title = element_text(face = "bold"),
+      axis.title.y = element_text(angle = 90)
+    )
+```
+
+
