@@ -335,10 +335,6 @@ data_reduced = data_reduced[, !(rm_col)]
 **Write the dataframe into csv file**
 
 ```{r}
-data_reduced = data_reduced[, c(1:26, 51, 53, 55, 27:50, 52, 54, 56)]
-```
-
-```{r}
 filename = "data_predict.csv"
 #write.csv(data_reduced, filename, row.names = FALSE)
 ```

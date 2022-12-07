@@ -3,8 +3,8 @@ title: "Some Other Exploratory Analysis"
 author: "HungTa Chen"
 date: "2022-12-06"
 output:
-  pdf_document: default
   html_document: default
+  pdf_document: default
 ---
 
 ```{r setup, include=FALSE}
@@ -86,6 +86,7 @@ combine_data[, "win_by_Decision"] = win_by_Decision
 combine_data[, "win_by_Decision_pct"] = combine_data$win_by_Decision/combine_data$wins
 combine_data[, "win_by_KO.TKO_pct"] = combine_data$win_by_KO.TKO/combine_data$wins
 combine_data[, "win_by_Submission_pct"] = combine_data$win_by_Submission/combine_data$wins
+combine_data = replace(combine_data, is.na(combine_data), 0)
 ```
 
 **Compare the stats between different weight classes**
@@ -127,4 +128,95 @@ From the side-by-side boxplots above, we can see a lot of interesting facts.
 
     Additionally, we can actually see in the boxplots that higher weight class has higher "*win by KO/TKO percentage*" and lower "*win by decision percentage*", which further suggests the relationship between one's weight and power.
 
-3.  
+3.  The higher the weight class is, the taller the fighters are and the longer their reaches are. (This is actually a common sense)
+
+4.  There's also a few counterintuitive findings. This first one is that while most people think that Heavyweight fighters are less skillful, they actually have the highest "*average significant strike percentage*", which means they land their strikes more accurately than fighters in other weight class.
+
+    Another finding is that the ages of Heavyweight fighters are actually the oldest among all weight classes. Many people think Heavyweight fighters usually have relatively shorter career than fighters in other division because they are facing more powerful opponents, but surprisingly the boxplot says the otherwise.
+
+**Compare the stats between genders**
+
+Now we want to see the difference between fighters with different gender. To eliminate the effect of the weight, we compare the pair of Bantamweight (men) and WomenBantamweight and the pair of Flyweight (men) and WomenFlyweight
+
+```{r}
+for(i in c(2:19, 33, 34, 36, 38:40)){
+  boxplot(wbw_stat[,i], bw_stat[,i], main=colnames(fw_stat)[i], names=c("W_BW", "BW"), col=rainbow(2), outline=F)
+}
+```
+
+```{r}
+for(i in c(2:19, 33, 34, 36, 38:40)){
+  boxplot(wflw_stat[,i], flw_stat[,i], main=colnames(fw_stat)[i], names=c("W_FLW", "FLW"), col=rainbow(2), outline=F)
+}
+```
+
+According to the plots above, we can also see some interesting facts.
+
+1.  Male fighters generally are more powerful than female fighters.
+
+    From the boxplots we can see that male fighters have higher "*average knockdown*" in both Flyweight and Bantamweight. Also, female fighters have higher "win by decision percentage" than male fighters in both weight classes, which means they generally lack the power to finish their opponets. That is probably why female fighters also have longer "average total time fought".
+
+2.  Female fighters tend to throw more strikes than male fighters.
+
+    From the boxplots we can see that females fighters have more "average strikes landed" in lmost every department, including significant strikes, head strikes, body strikes, leg strikes, etc.
+
+3.  Female fighters are generally older than male fighters.
+
+    We can see that the median of "age" of female fighters are larger than male fighters in both weight classes.
+
+**Check if there's any other relationship between columns**
+
+```{r}
+cor = data.frame(cor(combine_data[, c(2:7, 10:19, 33, 34, 36, 38:40)]))
+cor
+```
+
+We extract every correlation whose absolute value is larger than 0.4.
+
+```{r}
+for(i in 1:(nrow(cor)-1)){
+  for(j in (i+1):(ncol(cor))){
+    if(abs(cor[i, j]) >= 0.4){
+      cat(sprintf("%s & %s: %f\n", rownames(cor)[i], colnames(cor)[j], cor[i, j]))
+    }
+  }
+}
+```
+
+After taking a quick look at the correlations above, we can easily see that basically all kinds of "*number of landed strikes*" are related to each other to some extent.
+
+Now we remove the correlation between two kinds of "*number of landed strikes*" to get a clearer look at other correlations.
+
+```{r}
+v_names = rownames(cor)
+reg_str = "STR|HEAD|BODY|LEG|DISTANCE|CLINCH|GROUND"
+for(i in 1:(nrow(cor)-1)){
+  for(j in (i+1):(ncol(cor))){
+    if(abs(cor[i, j]) >= 0.4){
+      if(!str_detect(v_names[i], regex(reg_str)) | !str_detect(v_names[j], regex(reg_str))){
+        cat(sprintf("%s & %s: %f\n", rownames(cor)[i], colnames(cor)[j], cor[i, j]))
+      }
+    }
+  }
+}
+```
+
+1.  The four variables, "*average takedown percentage*", "*average takedown landed*", "*average control time*", "*average ground strikes landed*", are correlated with one another to some extent. (Classic grappler)
+
+    This is quite intuitive because if one have a high takedown percentage, one can take your opponent down easily, thereby having more takedowns in a fight. Also, since one can easily bring his opponent to the ground, he can control his opponent on the ground for longer time and land more ground strikes on his opponent.
+
+2.  "*Average knockdown*" are correlated with "*win by KO/TKO percentage*".
+
+    This also makes sense because if one can knock his opponent down easily, he's more likely to knock his opponent out and ends the fight.
+
+3.  "*Average total time fought*" is correlated with several types of "*average landed strikes*".
+
+    This is nothing special because the more time one spends in a fight, the more strikes one can land on his opponent.
+
+4.  "*Average submission attempt*" is correlated with "*win by submission percentage*".
+
+    This one is also straightforward because the more submissions one attempt, the more likely he can submit his opponent and end the fight.
+
+5.  "*Average total time fought*" is correlated with "*win by decision percentage*".
+
+    The result of a fight is decided by judges when both fighters cannot finish each other before the time runs out. Therefore, the more time one spend in a fight, the more likely he fights for full 15 minutes and then win by decision.
