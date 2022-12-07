@@ -1,0 +1,260 @@
+---
+title: "Kmeans"
+author: "WEITING LIN"
+date: "2022-12-04"
+output: html_document
+---
+
+```{r}
+library(tidyverse)
+library(dplyr)
+library(ggplot2)
+library(GGally)
+#install.packages('plotly')
+library(plotly)
+#install.packages('factoextra')
+library(factoextra)
+data<-read.csv("data_ML_windy.csv")
+data<-na.omit(data)
+
+```
+
+### Data cleaning
+
+Add columns, which determine the winner and the loser.
+
+```{r}
+red=vector()
+blue=vector()
+for(i in 1:nrow(data)){
+  if(data$Winner[i]=='Red'){
+    red=append(red,1)
+    blue=append(blue,0)
+  }else{
+    red=append(red,0)
+    blue=append(blue,1)
+  }
+  
+}
+
+data$red_win_lost<-red
+data$blue_win_lost<-blue
+
+```
+
+```{r}
+coln<-c('avg_KD','SUB_ATT',"SIG_STR_landed","TD_att",'HEAD_landed','BODY_landed',"LEG_landed",'DISTANCE_landed','CLINCH_landed','GROUND_landed','CTRL_time.seconds','title_bouts','longest_win_streak','wins','losses','win_by_KO.TKO','win_by_Submission','Reach_cms',"age",'current_streak','win_by_Decision')
+newdata<-data.frame(matrix(ncol=21,nrow=nrow(data)*2))
+for(i in 3:23){
+  newdata[,i-2]<-c(data[,i],data[,i+23])
+}
+colnames(newdata)<-coln
+newdata$winner<-c(blue,red)
+newdata$weight_class<-c(data$weight_class,data$weight_class)
+
+```
+
+Remove the women class, and the number of class less than 30, which violate sampling rule.
+
+```{r}
+table(newdata$weight_class)
+newdata<-newdata[!(newdata$weight_class%in%c('CatchWeight','WomenBantamweight','WomenFeatherweight','WomenFlyweight','WomenStrawweight')),]
+
+split_newdata<-split(newdata,newdata$weight_class)
+```
+
+#### Create `cluster_sig_factors()` function to simplify code
+
+```{r}
+#wc means weight class
+#we only take the numeric variable and remove the winner variable
+wc<-c("Bantamweight",'Featherweight','Flyweightweight','LightHeavyweight','Lightweight','Middleweight','Welterweight','Heavyweight')
+cluster_sig_factors<-function(x,i){
+  p<-ggparcoord(data = x, columns = c(1:21), groupColumn = "cluster", scale = "std") + labs(x = paste0("cluster--",wc[i]), y = "value (in standard-deviation units)", title = "Clustering")+scale_x_discrete(guide = guide_axis(angle = 90))
+  p
+}
+```
+
+### Steps to do kmeans clustering
+
+-   splitting data into eight class
+
+-   Through `fviz_nbclust()` to find the optimal number of clusters
+
+-   building model with kmeas
+
+-   clustering data with `fviz_cluster()`
+
+-   utilizing `ggparcoord()` to explore the relation of variable in different cluster.
+
+#### Bantam weight analysis
+
+```{r}
+set.seed(2022)
+#we only take the numeric variable and remove the winner variable
+fviz_nbclust(split_newdata$Bantamweight[,-c(22,23)],kmeans,method='wss')
+k1<-kmeans(split_newdata$Bantamweight[,-c(22,23)],centers = 2,nstart = 100)
+fviz_cluster(k1,split_newdata$Bantamweight[,-c(22,23)])
+pca1<-prcomp(split_newdata$Bantamweight[,-c(22,23)],scale. =T,center = T)
+new_ban<-split_newdata$Bantamweight[,-c(22,23)]
+new_ban$cluster <- as.factor(k1$cluster)
+cluster_sig_factors(new_ban,1)
+#ggplotly(p)
+```
+
+From the second plot, we could found that there are two clusters in bantamweight. Take a close look at the difference of two clusters, it is obvious that players in cluster one getting more points in ground_landed and CTRL_landed, so we could conclude that players in cluster one tend to be grapplers. Besides, players in cluster one usually either higher or older than cluster two.
+
+Players in cluster two specialize in knock-down(KD) and touch-down(TD), clinch. Hence we deduce players in cluster two may win by submission.
+
+As for the win method, players in cluster one focus more on decision, namely strategy, and players in cluster two emphasize in submission method. Moreover, players in cluster one have more times of win.
+
+#### Feather weight analysis
+
+```{r}
+set.seed(2023)
+#we only take the numeric variable and remove the winner variable
+fviz_nbclust(split_newdata$Featherweight[,-c(22,23)],kmeans,method='wss')
+k2<-kmeans(split_newdata$Featherweight[,-c(22,23)],centers = 2,nstart = 100)
+fviz_cluster(k2,split_newdata$Featherweight[,-c(22,23)])
+pca2<-prcomp(split_newdata$Featherweight[,-c(22,23)],scale. =T,center = T)
+new_Featherweight<-split_newdata$Featherweight[,-c(22,23)]
+new_Featherweight$cluster <- as.factor(k2$cluster)
+cluster_sig_factors(new_Featherweight,2)
+```
+
+From the second plot, we could found that there are two clusters in featherweight. Take a close look at the difference of two clusters, players in cluster one focus more on CTRL_time and GROUND_landed, so we deduce that players in cluster one may be grapplers. However, players in cluster one have more failure experience.
+
+Players in cluster two adopt knock-down attempt(KD), touch-down attempt(TD) and submission attempt(SUB_ATT), hence; we think that they may win by submission. Besides, they are either younger or shorter than players in cluster two.
+
+As a result, the plot shows that players in cluster one often win by decision and players in cluster two often win by submission.
+
+#### Fly weight analysis
+
+```{r}
+set.seed(2023)
+#we only take the numeric variable and remove the winner variable
+fviz_nbclust(split_newdata$Flyweight[,-c(22,23)],kmeans,method='wss')
+k3<-kmeans(split_newdata$Flyweight[,-c(22,23)],centers = 2,nstart = 100)
+fviz_cluster(k3,split_newdata$Flyweight[,-c(22,23)])
+pca3<-prcomp(split_newdata$Flyweight[,-c(22,23)],scale. =T,center = T)
+new_Flyweight<-split_newdata$Flyweight[,-c(23,22)]
+new_Flyweight$cluster <- as.factor(k3$cluster)
+cluster_sig_factors(new_Flyweight,3)
+```
+
+From the second plot, we could found that there are two clusters in featherweight. Take a close look at the difference of two clusters, players in cluster two focus more on title bouts and touch-down attempt(TD), leg strikes (Leg_landed). As for players in cluster one, most of them prefer to use skills such as ground attack(GROUND_landed), and time control(CTRL_time.seconds).
+
+Hence, we conclude that players in flyweight still have two different type in mixed martial art.
+
+#### Light-Heavy weight analysis
+
+```{r}
+set.seed(2023)
+#we only take the numeric variable and remove the winner variable
+fviz_nbclust(split_newdata$LightHeavyweight[,-c(22,23)],kmeans,method='wss')
+k4<-kmeans(split_newdata$LightHeavyweight[,-c(22,23)],centers = 2,nstart = 100)
+fviz_cluster(k4,split_newdata$LightHeavyweight[,-c(22,23)])
+pca4<-prcomp(split_newdata$LightHeavyweight[,-c(22,23)],scale. =T,center = T)
+new_LightHeavyweight<-split_newdata$LightHeavyweight[,-c(22,23)]
+new_LightHeavyweight$cluster <- as.factor(k4$cluster)
+cluster_sig_factors(new_LightHeavyweight,4)
+```
+
+In light-heavy weight, we still could observe the same result of clusters, the cluster are divided into,submission-oriented type and decision-oriented type.
+
+To be more specific, submission-oriented type tends to contain the skills in clinch and touch down, and decision-oriented type incline to include skills in ground strikes(GROUND_landed) and time control(CTRL_time.seconds).
+
+#### Light-weight analysis
+
+```{r}
+set.seed(2023)
+#we only take the numeric variable and remove the winner variable
+fviz_nbclust(split_newdata$Lightweight[,-c(22,23)],kmeans,method='wss')
+k5<-kmeans(split_newdata$Lightweight[,-c(22,23)],centers = 2,nstart = 100)
+fviz_cluster(k5,split_newdata$Lightweight[,-c(22,23)])
+pca5<-prcomp(split_newdata$Lightweight[,-c(22,23)],scale. =T,center = T)
+new_Lightweight<-split_newdata$Lightweight[,-c(23,22)]
+new_Lightweight$cluster <- as.factor(k5$cluster)
+cluster_sig_factors(new_Lightweight,5)
+```
+
+We also get the same result in light weight class, there is an interesting detection, players in cluster two have more win experience than players in cluster one. To some extent, we could speculate that players are grapplers may have high win rate than players are strikers.
+
+#### Middle weight analysis
+
+```{r}
+set.seed(2023)
+#we only take the numeric variable and remove the winner variable
+fviz_nbclust(split_newdata$Middleweight[,-c(22,23)],kmeans,method='wss')
+k6<-kmeans(split_newdata$Middleweight[,-c(22,23)],centers = 2,nstart = 100)
+fviz_cluster(k6,split_newdata$Middleweight[,-c(22,23)])
+pca6<-prcomp(split_newdata$Middleweight[,-c(22,23)],scale. =T,center = T)
+new_Middleweight<-split_newdata$Middleweight[,-c(23,22)]
+new_Middleweight$cluster <- as.factor(k6$cluster)
+cluster_sig_factors(new_Middleweight,6)
+```
+
+It is clear that players in middle weight are split into two clusters as well. In cluster two, Players tend to be strikers, and they utilize more clinch skills than strikers in other classes.
+
+#### Welter weight analysis
+
+```{r}
+set.seed(2023)
+#we only take the numeric variable and remove the winner variable
+fviz_nbclust(split_newdata$Welterweight[,-c(22,23)],kmeans,method='wss')
+k7<-kmeans(split_newdata$Welterweight[,-c(22,23)],centers = 2,nstart = 100)
+fviz_cluster(k7,split_newdata$Welterweight[,-c(22,23)])
+pca7<-prcomp(split_newdata$Welterweight[,-c(22,23)],scale. =T,center = T)
+new_Welterweight<-split_newdata$Welterweight[,-c(22,23)]
+new_Welterweight$cluster <- as.factor(k7$cluster)
+cluster_sig_factors(new_Welterweight,7)
+```
+
+In welter weight class, players are still divided into two cluster, strikers and grapplers. Players in cluster two, namely strikers, take more touch-down attempt than players in cluster one, grapplers. There is difference between welter weight class and middle weight class. Strikers in welterweight have longer win streak than grapplers in middle weight class.
+
+#### Heavy weight analysis
+
+```{r}
+set.seed(2023)
+#we only take the numeric variable and remove the winner variable
+fviz_nbclust(split_newdata$Heavyweight[,-c(22,23)],kmeans,method='wss')
+k8<-kmeans(split_newdata$Heavyweight[,-c(22,23)],centers = 2,nstart = 100)
+fviz_cluster(k8,split_newdata$Heavyweight[,-c(22,23)])
+pca8<-prcomp(split_newdata$Heavyweight[,-c(22,23)],scale. =T,center = T)
+new_Heavyweight<-split_newdata$Heavyweight[,-c(22,23)]
+new_Heavyweight$cluster <- as.factor(k8$cluster)
+cluster_sig_factors(new_Heavyweight,8)
+```
+
+In heavy weight class, players are still separated into two clusters. Players being strikers in heavy weight class use more leg attack skills than strikers in other classes.
+
+#### Conclusion
+
+To sum up, all the eight classes are separate players into strikers and grapplers. Strikers are players who major at leg attack, clinch, and have more attempts in submission, touch-down. Grapplers are players who prefer to ground strikes and time control, head strikes. Therefore, it is straightforward that grapplers have high significant strikes. Moreover, there is a interesting observation that grappers tend to win by decision and strikers incline to win by submission.
+
+```{r,echo=FALSE,results='hide'}
+#par(mfrow=c(11,2))
+# for(i in 1:20){
+#   y=scale(newdata[,i])
+#   x=newdata[,22]
+#   boxplot(y~x,ylab=colnames(newdata[i]),outline=F)
+# }
+
+```
+
+```{r,echo=FALSE,results='hide'}
+#corr<-data.frame(abs(cor(data1[,-c(1,2,3)])))
+# refine<-function(x){
+#   for(i in 1:nrow(x)){
+#     for(j in 1:ncol(x)){
+#       if(x[i,j]<0.5){
+#         x[i,j]=NA
+#       }
+#       
+#     }
+#   }
+#   return(x)
+#   }
+# print(refine(corr))
+
+```
