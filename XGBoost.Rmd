@@ -1,0 +1,90 @@
+---
+title: "XGBoost"
+author: "HungTa Chen"
+date: "2022-12-07"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+**Read in the data**
+
+```{r}
+data = read.csv("./data_predict.csv")
+```
+
+**Load packages**
+
+```{r, results='hold'}
+library(xgboost)
+library(caret)
+```
+
+**Partition the dataset**
+
+We partition the data into training set and testing set by 80:20.
+
+```{r, results='hold'}
+# Change the label to 0 and 1
+data[data$Winner == "Blue", 1] = 0
+data[data$Winner == "Red", 1] = 1
+
+set.seed(5406)
+# Separate the dataset into training set and testing set
+partition = createDataPartition(data$Winner, p=0.8, list=T)
+train_data = data[partition$Resample1, ]
+test_data = data[(-1)*partition$Resample1, ]
+X_train = data.matrix(train_data[, -1])
+Y_train = train_data[, 1]
+X_test = data.matrix(test_data[, -1])
+Y_test = test_data[, 1]
+
+# Training set and testing set for Xgboost
+train_set = xgb.DMatrix(data = X_train, label = Y_train)
+test_set = xgb.DMatrix(data = X_test, label = Y_test)
+```
+
+**Train**
+
+```{r, results='hold'}
+watchlist <- list(train=train_set, test=test_set)
+xgb_model = xgb.train(data = train_set, max.depth = 10, watchlist=watchlist, nrounds = 100)
+```
+
+**Get the finalized model**
+
+From the training process above, we can see that the model started to overfit after the 4th round. Therefore, we set the training round to 4 in our finalized model.
+
+```{r}
+xgb_model_final = xgb.train(data = train_set, max.depth = 10, watchlist=watchlist, nrounds = 4)
+```
+
+**Predic**
+
+```{r}
+# Wrapper func for predict()
+xgb_predict = function(model, test_set){
+  pred = predict(model, test_set)
+  pred = as.numeric(pred > 0.5)
+  return(pred)
+}
+
+# Calculate the accuracy
+accuracy = function(label, pred){
+  acc = (sum(pred == label)) / length(label)
+  return(acc)
+}
+```
+
+```{r, results='hold'}
+#
+# Predict
+pred_train = xgb_predict(xgb_model_final, train_set)
+acc = accuracy(Y_train, pred_train)
+cat(sprintf("Training accuracy: %f\n", acc))
+pred_test = xgb_predict(xgb_model_final, test_set)
+acc_test = accuracy(Y_test, pred_test)
+cat(sprintf("Testing accuracy: %f\n", acc_test))
+```
