@@ -1,0 +1,86 @@
+---
+title: "random forest"
+author: "WEITING LIN"
+date: "2022-12-07"
+output: html_document
+---
+
+# Decision tree
+
+```{r}
+library(tidyverse)
+library(dplyr)
+predict_data<-read_csv("data_predict.csv")
+```
+
+```{r}
+str(predict_data)
+predict_data$Winner<-as.factor(predict_data$Winner)
+```
+
+```{r}
+set.seed(2023)
+out<-sample(1:nrow(predict_data),size =0.8*nrow(predict_data),replace=F)
+test<-predict_data[out,]
+train<-predict_data[-out,]
+```
+
+```{r}
+#install.packages("rpart.plot")
+```
+
+```{r,results='hide',echo = T}
+library(rpart)
+library(rpart.plot)
+```
+
+```{r}
+fit<-rpart(Winner~.,data=train,method='class')
+rpart.plot(fit, extra= 106)
+```
+
+After setting model, we turn to check it prediction efficency. However, its accuracy of prediction is not good at all. So we try random forest and to find if there exits better model.
+
+```{r}
+prediction_of_test<-predict(fit,test,method='class')
+result=vector()
+for(i in 1:nrow(test)){
+  if (prediction_of_test[i,1]>prediction_of_test[i,2]){
+    result[i]='Blue'
+  }else{
+    result[i]='Red'
+  }
+}
+output<-table(test$Winner,result)
+accuracy<-(sum(diag(output))/sum(output))*100
+print(paste0('accuracy rate is ', round(accuracy,2) ,"%"))
+
+```
+
+# Random forest
+
+```{r,result='hide',echo = T}
+#install.packages("randomForest")
+library(randomForest)
+```
+
+```{r}
+set.seed(2025)
+rf <- randomForest(Winner~., data=train,ntree=1000)
+plot(rf)
+```
+
+However, the OOB(black line) shows that there is no significant change in error rate with the increasing tree.The result shows that the accuracy rate is 56.9%
+
+```{r,results='hide',echo = T}
+library(caret)
+```
+
+```{r}
+prediction_of_test<-predict(rf,test)
+confusionMatrix(prediction_of_test,test$Winner)
+```
+
+#### Conclusion
+
+Random forest model is better than decision tree.
