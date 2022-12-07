@@ -22,7 +22,7 @@ library(xgboost)
 library(caret)
 ```
 
-**Partition the dataset**
+**Split the data into training set and testing set**
 
 We partition the data into training set and testing set by 80:20.
 
@@ -61,7 +61,7 @@ From the training process above, we can see that the model started to overfit af
 xgb_model_final = xgb.train(data = train_set, max.depth = 10, watchlist=watchlist, nrounds = 4)
 ```
 
-**Predic**
+**Predict**
 
 ```{r}
 # Wrapper func for predict()

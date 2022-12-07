@@ -1,0 +1,96 @@
+---
+title: "Logistic regression"
+author: "HungTa Chen"
+date: "2022-12-07"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+**Read in the data**
+
+```{r}
+data = read.csv("./data_predict.csv")
+```
+
+**Load packages**
+
+```{r}
+library(caret)
+```
+
+**Split the data into training set and testing set**
+
+```{r}
+# Change the label to 0 and 1
+data[data$Winner == "Blue", 1] = 0
+data[data$Winner == "Red", 1] = 1
+data$Winner = as.numeric(data$Winner)
+
+set.seed(1024)
+# Separate the dataset into training set and testing set
+partition = createDataPartition(data$Winner, p=0.8, list=T)
+train_data = data[partition$Resample1, ]
+test_data = data[(-1)*partition$Resample1, ]
+X_train = data.matrix(train_data[, -1])
+Y_train = train_data[, 1]
+X_test = data.matrix(test_data[, -1])
+Y_test = test_data[, 1]
+```
+
+**Fit the logistic regression model**
+
+```{r}
+fit = glm(formula = Winner~ ., family = binomial(link = "logit"), data = train_data)
+summary(fit)
+```
+
+**Predict**
+
+```{r}
+# Wrapper func for predict()
+logistic_predict = function(model, new_data){
+  pred = predict(model, newdata=new_data, type='response')
+  pred = as.numeric(pred > 0.5)
+  return(pred)
+}
+
+# Calculate the accuracy
+accuracy = function(label, pred){
+  acc = (sum(pred == label)) / length(label)
+  return(acc)
+}
+```
+
+```{r}
+pred_train = logistic_predict(fit, data.frame(X_train))
+acc = accuracy(Y_train, pred_train)
+cat(sprintf("Training accuracy: %f\n", acc))
+pred_test = logistic_predict(fit, data.frame(X_test))
+acc_test = accuracy(Y_test, pred_test)
+cat(sprintf("Testing accuracy: %f\n", acc_test))
+```
+
+**Try stepwise regression**
+
+```{r}
+library(MASS)
+fit0 = glm(formula = Winner~1, family = binomial(link = "logit"), data = train_data)
+forward_step=stepAIC(fit0, scope=list(upper=fit, lower=fit0), direction = 'both', k=2)
+forward_step$anova
+```
+
+```{r}
+fit_optimal = glm(formula = Winner ~ B_age + R_age + R_avg_CTRL_time.seconds. + B_avg_TD_att + B_avg_SUB_ATT, family = binomial(link = "logit"), data = train_data)
+```
+
+```{r}
+pred_train_o = logistic_predict(fit_optimal, data.frame(X_train))
+acc_o = accuracy(Y_train, pred_train_o)
+cat(sprintf("Training accuracy: %f\n", acc_o))
+pred_test_o = logistic_predict(fit_optimal, data.frame(X_test))
+acc_test_o = accuracy(Y_test, pred_test_o)
+cat(sprintf("Testing accuracy: %f\n", acc_test_o))
+```
