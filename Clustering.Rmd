@@ -1,0 +1,174 @@
+---
+title: "Final Project_Clustering"
+author: "Yuchen Liu,"
+date: "2022/12/6"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## For we are working on a large dataframe we are more intersted in how the original data distributed, so we are applying cluster on our data set to see what could be the explaination.
+```{r}
+library(ggplot2)
+library(factoextra)
+library(cluster)
+library(MASS)
+require(tidyverse)
+library(dplyr)
+library(factoextra)
+library(cluster)
+```
+Cluster the states by using hierarchical clustering with complete linkage and Euclidean distance.
+```{r}
+df = read.csv('C:/Users/THINKPAD x1/Desktop/141A-final-project-main (1)/141A-final-project-main/ufc_data.csv')
+head(df)
+```
+The data seems has both catalogical factor and numberic factors, we should do clearing on the data set.
+```{r}
+df<-drop_na(df)
+num_cols <- unlist(lapply(df, is.numeric))
+df_num <- df[, num_cols]
+#df<-df_num
+```
+```{r}
+df_num[,sapply(df_num, function(v) var(v, na.rm=TRUE)!=0)]
+constance<-names(df_num[, sapply(df_num, function(v) var(v, na.rm=TRUE)==0)])
+```
+```{r}
+df <- df %>% select(-B_draw)
+df <- df %>% select(-R_draw)
+```
+
+First we want to focus on the concentration of distribution of the data points in the entire system, we wanted to quantitatively estimate the relation between every sample in the system and study how close each data point is related to each other in the system. To achieve this objective, we choose to start with hierarchical clustering to see how many possible clusters there which is able to explain the data distribution
+
+### Dendrogram
+
+The sole concept of hierarchical clustering lies in just the construction and analysis of a dendrogram. A dendrogram is a tree-like structure that explains the relationship between all the data points in the system.
+
+```{r}
+#function to compute agglomerative coefficient
+m <- c( "average", "single", "complete", "ward")
+names(m) <- c( "average", "single", "complete", "ward")
+
+ac <- function(x) {
+  agnes(df, method = x)$ac
+}
+
+#calculate agglomerative coefficient for each clustering linkage method
+sapply(m, ac)
+
+#perform hierarchical clustering using Ward's minimum variance
+clust <- agnes(df, method = "ward")
+
+#produce dendrogram
+Tree <-pltree(clust, cex = 0.6, hang = -1, main = "Dendrogram") 
+```
+
+Each level of dendrogram has a subtle meaning to the relationship between its data members. In a regular relationship chart, one may interpret that at the top lies grandparents or the first generation, the next level corresponds to parents or second generation and the final level belongs to children or third generation. Likewise, in every branching procedure of dendrogram, all the data points having the membership at each level belongs to a certain class.
+
+From the dendrogram above we found that that the optimal cut off for the dendrogram is about depth arround 20000, which will result in 5 different clustering
+
+```{r}
+depth.cutoff <- 22000
+cut(Tree, h = depth.cutoff)$upper
+plot(cut(dend, h = depth.cutoff)$upper, horiz = T)
+```
+
+We are then able to use k=5 for the K-Means Clustering
+
+### K-means clustering
+
+K-means clustering is a technique in which we place each observation in a dataset into one of K clusters.
+
+The end goal is to have K clusters in which the observations within each cluster are quite similar to each other while the observations in different clusters are quite different from each other.
+
+First, we’ll use the fviz_nbclust() function to create a plot of the number of clusters vs. the total within sum of squares.
+```{r}
+fviz_nbclust(df_num, kmeans, method = "wss")
+```
+
+Although 4 is good, its seems that k=5 could be better explain the variance in the data. We can now perform k-means clustering on the dataset using the optimal value for k of 5
+
+```{r}
+df_num <- df_num %>% select(-B_draw)
+df_num <- df_num %>% select(-R_draw)
+```
+
+To perform k-means clustering in R we can use the built-in kmeans() function, which uses the following syntax:
+
+'kmeans(data, centers, nstart)'
+
+where:
+
+'data': Name of the dataset.
+
+'centers': The number of clusters, denoted k.
+
+'nstart': The number of initial configurations. Because it’s possible that different initial starting clusters can lead to different results, it’s recommended to use several different initial configurations. The k-means algorithm will find the initial configurations that lead to the smallest within-cluster variation.
+
+```{r}
+km <- kmeans(df_num, centers = 5, nstart = 100)
+```
+
+We can visualize the clusters on a scatterplot that displays the first two principal components on the axes using the fivz_cluster() function
+
+```{r}
+fviz_cluster(km, data = df_num)
+```
+We can also append the cluster assignments of each state back to the original dataset:
+
+```{r}
+final_data <- cbind(df_num, cluster = km$cluster)
+```
+
+We are the able to print the head of the boxer in some cluster
+
+```{r}
+Cluster_1 <- subset(final_data,cluster == 1)
+Cluster_2 <- subset(final_data,cluster == 2)
+Cluster_3 <- subset(final_data,cluster == 3)
+Cluster_4 <- subset(final_data,cluster == 4)
+Cluster_5 <- subset(final_data,cluster == 5)
+
+head(Cluster_1)
+head(Cluster_2)
+head(Cluster_3)
+head(Cluster_4)
+head(Cluster_5)
+```
+## 2. Principal component analysis
+
+The goal of this part is to explore the data set using principal component analysis (PCA), and to understand how much information we lose by reducing the dimension of the data set.
+
+```{r}
+df<-df_num
+pr.out = prcomp(df,scale.=TRUE)
+# Sample mean and standard deviation before transformation
+pr.out$center
+pr.out$scale
+# Transformed data
+pr.out$x[1,]
+pr.out$rotation
+# The rotation matrix provides the principal component loadings; each column of 
+# pr.out$rotation contains the corresponding principal component loading vector
+
+# Standard deviations and correlations
+pr.out$sdev
+sd(pr.out$x[,1])
+sd(pr.out$x[,2])
+cor(pr.out$x[,1],pr.out$x[,2])
+
+# Transformed plot
+#qplot(df_num[,1],df_num[,2])
+#qplot(pr.out$x[,1],pr.out$x[,2]) +
+#	coord_cartesian(xlim = c(-2.5*sqrt(2),2.5*sqrt(2)),ylim = c(-2.5*sqrt(2),2.5*sqrt(2)))
+explain <-pr.out$sdev^2 / sum(pr.out$sdev^2)
+head(explain)
+biplot(pr.out, scale = 0)
+pca <-summary(pr.out)
+screeplot(pr.out,type="lines")
+
+```
+
