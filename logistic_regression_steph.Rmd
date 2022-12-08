@@ -1,0 +1,46 @@
+---
+title: "logistic regression"
+author: "Tianyue Xiao"
+date: "2022-12-6"
+output: html_document
+---
+
+**Logistic regression**
+```{r}
+library(tidyverse)
+mydata <- read.csv('/Users/THESUN/Desktop/data_predict.csv')
+mydata
+```
+
+
+```{r}
+mydata$Winner<-factor(mydata$Winner,levels=c('Blue','Red'))
+ratio<-0.8
+obsCnt<-nrow(mydata)
+trainSize<-round(ratio*obsCnt)
+testSize<-obsCnt-trainSize
+trainData<-mydata[1:trainSize,]
+testData<-mydata[(1+trainSize):obsCnt,]
+
+Ytrain<-factor(trainData$Winner,levels=c('Blue','Red'))
+Xtrain<-trainData[2:length(trainData)]
+
+model_logit<-glm(Winner~.,data=trainData,family = binomial(link = "logit"))
+summary(model_logit)
+coef(model_logit)[2]
+```
+
+```{r}
+library(pscl)
+pR2(model_logit)
+```
+
+```{r}
+Ytest<-testData$Winner
+Xtest<-testData[2:length(trainData)]
+YtestPredict<-predict.glm(model_logit,newdata=Xtest,type='response')
+YtestPredict <- factor(ifelse(YtestPredict <= 0.5,'Blue','Red'), levels=c('Blue','Red'))
+
+misClasificError <- mean(YtestPredict != Ytest)
+print(paste('Accuracy',1-misClasificError))
+```

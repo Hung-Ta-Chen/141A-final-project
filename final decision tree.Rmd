@@ -1,0 +1,82 @@
+---
+title: "141a final project"
+output: html_document
+date: "2022-12-07"
+---
+
+```{r}
+data<- read.csv("~/Downloads/141A-final-project-main/data_predict.csv")
+data<-na.omit(data)
+```
+
+```{r}
+library(party)
+library(rpart.plot)
+library(rpart)
+```
+
+### Data cleaning
+```{r}
+shuffle_index <- sample(1:nrow(data))
+head(shuffle_index)
+data<- data[shuffle_index, ]
+head(data)
+```
+```{r}
+# Create a train and test set
+# train the model on the train set and test the prediction on the test set 
+
+create_train_test <- function(data, size = 0.8, train = TRUE) {
+    n_row = nrow(data)
+    total_row = size * n_row
+    train_sample <- 1: total_row
+    if (train == TRUE) {
+        return (data[train_sample, ])
+    } else {
+        return (data[-train_sample, ])
+    }
+}
+
+data_train <- create_train_test(data, 0.8, train = TRUE)
+data_test <- create_train_test(data, 0.8, train = FALSE)
+
+dim(data_train)
+dim(data_test)
+
+# create decision tree
+fit <- rpart(Winner~., data = data_train, method = 'class')
+rpart.plot(fit, extra = 106)
+```
+At the top, it is the overall probability of red as winner. It shows the proportion of the winners that are red. 58% of the winners are red.
+This node asks whether the age of the competitor is lower than 30 years old. If yes, then you go down to the root’s left child node. 36% are age lower than 30 with the probability of 48% of win as blue
+In the second node, you ask if the fighter smaller than 30 years old and the blue fighter has above 5.7 average ground strikes landed. If yes, then the chance of winner is blue is 37%.
+
+Keep on going like that so that we could understand what features impact the likelihood of the color of the winner.
+
+```{r}
+predict_unseen <-predict(fit, data_test, type = 'class')
+table_mat <- table(data_test$Winner, predict_unseen)
+table_mat
+```
+The model correctly predicted 108 red winners but classified 85 red winners as blue. By analogy, the model misclassified 42 winners as blue while they turned out to be red.
+
+# Accuraacy Test
+```{r}
+accuracy_Test <- sum(diag(table_mat)) / sum(table_mat)
+print(paste('Accuracy for test', accuracy_Test))
+
+accuracy_tune <- function(fit) {
+    predict_unseen <- predict(fit, data_test, type = 'class')
+    table_mat <- table(data_test$Winner, predict_unseen)
+    accuracy_Test <- sum(diag(table_mat)) / sum(table_mat)
+    accuracy_Test
+}
+
+control <- rpart.control(minsplit = 4,
+    minbucket = round(5 / 3),
+    maxdepth = 3,
+    cp = 0)
+tune_fit <- rpart(Winner~., data = data_train, method = 'class', control = control)
+accuracy_tune(tune_fit)
+
+```
