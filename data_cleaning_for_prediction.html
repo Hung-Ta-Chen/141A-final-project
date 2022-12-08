@@ -565,7 +565,7 @@ them, we choose “B_avg_HEAD_landed” here.</p>
 <pre class="r"><code>drop_col = sapply(colnames(data_reduced), str_detect, regex(&quot;avg_SIG_STR_landed|avg_DISTANCE_landed&quot;))
 data_reduced = data_reduced[, !(drop_col)]</code></pre>
 <p><strong>Merge columns</strong></p>
-<p>We cam merge “current win streak” and “current lose streak” into one
+<p>We can merge “current win streak” and “current lose streak” into one
 column “current streak”, and positive number stands for winning streak
 and negative number stands for losing streak.</p>
 <pre class="r"><code>party = c(&quot;B&quot;, &quot;R&quot;)
@@ -605,7 +605,7 @@ data_reduced = cbind(data_reduced, R_win_by_Decision)
 dec_col = sapply(colnames(data_reduced), str_detect, regex(&quot;win_by_Decision_&quot;))
 data_reduced = data_reduced[, !(dec_col)]</code></pre>
 <p><strong>Check the relation between response variable and X variables
-with boxplot</strong></p>
+with boxplots</strong></p>
 <pre class="r"><code>data_reduced = data_reduced[, c(1:2, 3:24,47,49,51,25:46, 48,50,52)]
 data_swap = data_reduced[, c(1:2, 28:52, 3:27)]
 blue_idx = data_reduced$Winner == &quot;Blue&quot;

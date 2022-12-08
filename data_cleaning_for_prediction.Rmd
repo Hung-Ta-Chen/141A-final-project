@@ -245,7 +245,7 @@ data_reduced = data_reduced[, !(drop_col)]
 
 **Merge columns**
 
-We cam merge "current win streak" and "current lose streak" into one column "current streak", and positive number stands for winning streak and negative number stands for losing streak.
+We can merge "current win streak" and "current lose streak" into one column "current streak", and positive number stands for winning streak and negative number stands for losing streak.
 
 ```{r}
 party = c("B", "R")
@@ -288,7 +288,7 @@ dec_col = sapply(colnames(data_reduced), str_detect, regex("win_by_Decision_"))
 data_reduced = data_reduced[, !(dec_col)]
 ```
 
-**Check the relation between response variable and X variables with boxplot**
+**Check the relation between response variable and X variables with boxplots**
 
 ```{r}
 data_reduced = data_reduced[, c(1:2, 3:24,47,49,51,25:46, 48,50,52)]

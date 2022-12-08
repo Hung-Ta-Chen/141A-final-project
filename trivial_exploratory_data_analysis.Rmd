@@ -174,16 +174,19 @@ cor
 We extract every correlation whose absolute value is larger than 0.4.
 
 ```{r}
+v_names = rownames(cor)
 for(i in 1:(nrow(cor)-1)){
   for(j in (i+1):(ncol(cor))){
-    if(abs(cor[i, j]) >= 0.4){
+    if(abs(cor[i, j]) >= 0.4 & !str_detect(v_names[i], regex("SIG"))){
       cat(sprintf("%s & %s: %f\n", rownames(cor)[i], colnames(cor)[j], cor[i, j]))
     }
   }
 }
 ```
 
-After taking a quick look at the correlations above, we can easily see that basically all kinds of "*number of landed strikes*" are related to each other to some extent.
+After taking a quick look at the correlations above, we can easily see that many kinds of "*number of landed strikes*" are related to each other to some extent.
+
+The interesting one is that "*average clinch strikes landed*" is only correlated with "*average body strikes landed*", which means a fighter mostly attacks opponent's body in the clinch position.
 
 Now we remove the correlation between two kinds of "*number of landed strikes*" to get a clearer look at other correlations.
 
@@ -215,8 +218,8 @@ for(i in 1:(nrow(cor)-1)){
 
 4.  "*Average submission attempt*" is correlated with "*win by submission percentage*".
 
-    This one is also straightforward because the more submissions one attempt, the more likely he can submit his opponent and end the fight.
+    This one is also straightforward because the more submissions one attempts, the more likely he can submit his opponent and end the fight.
 
 5.  "*Average total time fought*" is correlated with "*win by decision percentage*".
 
-    The result of a fight is decided by judges when both fighters cannot finish each other before the time runs out. Therefore, the more time one spend in a fight, the more likely he fights for full 15 minutes and then win by decision.
+    The result of a fight is decided by judges when both fighters cannot finish each other before the time runs out. Therefore, the more time one spends in a fight, the more likely he fights for a full 15 minutes and then wins by decision.

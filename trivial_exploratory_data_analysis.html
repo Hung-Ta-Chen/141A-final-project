@@ -736,9 +736,10 @@ cor</code></pre>
 ## win_by_Submission_pct                1.000000000</code></pre>
 <p>We extract every correlation whose absolute value is larger than
 0.4.</p>
-<pre class="r"><code>for(i in 1:(nrow(cor)-1)){
+<pre class="r"><code>v_names = rownames(cor)
+for(i in 1:(nrow(cor)-1)){
   for(j in (i+1):(ncol(cor))){
-    if(abs(cor[i, j]) &gt;= 0.4){
+    if(abs(cor[i, j]) &gt;= 0.4 &amp; !str_detect(v_names[i], regex(&quot;SIG&quot;))){
       cat(sprintf(&quot;%s &amp; %s: %f\n&quot;, rownames(cor)[i], colnames(cor)[j], cor[i, j]))
     }
   }
@@ -747,12 +748,6 @@ cor</code></pre>
 ## avg_TD_pct &amp; avg_TD_landed: 0.613828
 ## avg_TD_pct &amp; avg_CTRL_time.seconds.: 0.506236
 ## avg_SUB_ATT &amp; win_by_Submission_pct: 0.441639
-## avg_SIG_STR_landed &amp; avg_HEAD_landed: 0.916361
-## avg_SIG_STR_landed &amp; avg_BODY_landed: 0.735323
-## avg_SIG_STR_landed &amp; avg_LEG_landed: 0.593457
-## avg_SIG_STR_landed &amp; avg_DISTANCE_landed: 0.924755
-## avg_SIG_STR_landed &amp; avg_CLINCH_landed: 0.474981
-## avg_SIG_STR_landed &amp; total_time_fought.seconds.: 0.627414
 ## avg_TD_landed &amp; avg_GROUND_landed: 0.416398
 ## avg_TD_landed &amp; avg_CTRL_time.seconds.: 0.754374
 ## avg_HEAD_landed &amp; avg_BODY_landed: 0.496294
@@ -772,8 +767,12 @@ cor</code></pre>
 ## win_by_Decision_pct &amp; win_by_Submission_pct: -0.456939
 ## win_by_KO.TKO_pct &amp; win_by_Submission_pct: -0.439527</code></pre>
 <p>After taking a quick look at the correlations above, we can easily
-see that basically all kinds of “<em>number of landed strikes</em>” are
-related to each other to some extent.</p>
+see that many kinds of “<em>number of landed strikes</em>” are related
+to each other to some extent.</p>
+<p>The interesting one is that “<em>average clinch strikes landed</em>”
+is only correlated with “<em>average body strikes landed</em>”, which
+means a fighter mostly attacks opponent’s body in the clinch
+position.</p>
 <p>Now we remove the correlation between two kinds of “<em>number of
 landed strikes</em>” to get a clearer look at other correlations.</p>
 <pre class="r"><code>v_names = rownames(cor)
@@ -826,14 +825,14 @@ the more strikes one can land on his opponent.</p></li>
 <li><p>“<em>Average submission attempt</em>” is correlated with “<em>win
 by submission percentage</em>”.</p>
 <p>This one is also straightforward because the more submissions one
-attempt, the more likely he can submit his opponent and end the
+attempts, the more likely he can submit his opponent and end the
 fight.</p></li>
 <li><p>“<em>Average total time fought</em>” is correlated with “<em>win
 by decision percentage</em>”.</p>
 <p>The result of a fight is decided by judges when both fighters cannot
 finish each other before the time runs out. Therefore, the more time one
-spend in a fight, the more likely he fights for full 15 minutes and then
-win by decision.</p></li>
+spends in a fight, the more likely he fights for a full 15 minutes and
+then wins by decision.</p></li>
 </ol>
 
 
