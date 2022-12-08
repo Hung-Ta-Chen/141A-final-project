@@ -1,7 +1,10 @@
 
 ##Clustering
+
 #3.1Agglomerative Hierarchical Clustering
+
 3.1.1 General introduction to Hierarchical Clustering
+
 Hierarchical clustering is an unsupervised clustering algorithm used to create clusters with a tree-like hierarchy. In this clustering method, there is no need to give the number of clusters to the algorithm.  In contrast to this, the other algorithm like K-Mean produces flat clusters where there is no hierarchy and we also have to choose the number of clusters, to begin with.
 
 Here, we first draw a Hierarchical Dendrogram to have a general overview of the ufc data to decide the number of clusters we need for the K-Mean clustering algorithm.
