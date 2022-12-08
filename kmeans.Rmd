@@ -43,6 +43,7 @@ data$blue_win_lost<-blue
 ```
 
 ```{r}
+
 coln<-c('avg_KD','SUB_ATT',"SIG_STR_landed","TD_att",'HEAD_landed','BODY_landed',"LEG_landed",'DISTANCE_landed','CLINCH_landed','GROUND_landed','CTRL_time.seconds','title_bouts','longest_win_streak','wins','losses','win_by_KO.TKO','win_by_Submission','Reach_cms',"age",'current_streak','win_by_Decision')
 newdata<-data.frame(matrix(ncol=21,nrow=nrow(data)*2))
 for(i in 3:23){
@@ -63,21 +64,45 @@ table(newdata$weight_class)
 newdata<-newdata[!(newdata$weight_class%in%c('CatchWeight','WomenBantamweight','WomenFeatherweight','WomenFlyweight','WomenStrawweight')),]
 
 split_newdata<-split(newdata,newdata$weight_class)
+names(newdata)[-c(15,16)]
 ```
 
 #### Create `cluster_sig_factors()` function to simplify code
 
 ```{r}
+
 #wc means weight class
 #we only take the numeric variable and remove the winner variable
 wc<-c("Bantamweight",'Featherweight','Flyweightweight','LightHeavyweight','Lightweight','Middleweight','Welterweight','Heavyweight')
-cluster_sig_factors<-function(x,i){
-  p<-ggparcoord(data = x, columns = c(1:14), groupColumn = "cluster", scale = "std") + labs(x = paste0("cluster--",wc[i]), y = "value (in standard-deviation units)", title = "Clustering")+scale_x_discrete(guide = guide_axis(angle = 90))
+
+optimal_cluster<-function(i){
+  target<-data.frame(split_newdata[i])
+  aim<-target[-c(15,16)]
+  fviz_nbclust(aim,kmeans,method ='wss')+labs( title = paste0(wc[i],'-optimal number of clusters '))
+}
+
+
+cluster_sig_factors<-function(i,num){
+  target<-data.frame(split_newdata[i])
+  aim<-target[-c(15,16)]
+  k<-kmeans(aim,centers = num,nstart = 100)
+  names(aim)<-names(newdata)[-c(15,16)]
+  aim$cluster <- as.factor(k$cluster)
+  p<-ggparcoord(data = aim, columns = c(1:14), groupColumn = "cluster", scale = "std") + labs(x = wc[i], y = "value (in standard-deviation units)", title = "important factors of each Cluster")+scale_x_discrete(guide = guide_axis(angle = 90))
   p
 }
+
+
+clustering<-function(i,num){
+  target<-data.frame(split_newdata[i])
+  aim<-target[,-c(15,16)]
+  k<-kmeans(aim,centers = num,nstart = 100)
+  fviz_cluster(k,aim)+labs(title=wc[i])
+}
+
 ```
 
-### Steps to do kmeans clustering
+Steps to do kmeans clustering
 
 -   splitting data into eight class
 
@@ -89,154 +114,21 @@ cluster_sig_factors<-function(x,i){
 
 -   utilizing `ggparcoord()` to explore the relation of variable in different cluster.
 
-#### Bantamweight analysis
-
-```{r}
-set.seed(2022)
-#we only take the numeric variable and remove the winner variable
-fviz_nbclust(split_newdata$Bantamweight[,-c(15,16)],kmeans,method='wss')
-k1<-kmeans(split_newdata$Bantamweight[,-c(15,16)],centers = 2,nstart = 100)
-fviz_cluster(k1,split_newdata$Bantamweight[,-c(15,16)])
-pca1<-prcomp(split_newdata$Bantamweight[,-c(15,16)],scale. =T,center = T)
-new_ban<-split_newdata$Bantamweight[,-c(15,16)]
-new_ban$cluster <- as.factor(k1$cluster)
-cluster_sig_factors(new_ban,1)
-#ggplotly(p)
-```
-
-#### Featherweight analysis
-
 ```{r}
 set.seed(2023)
-#we only take the numeric variable and remove the winner variable
-fviz_nbclust(split_newdata$Featherweight[,-c(15,16)],kmeans,method='wss')
-k2<-kmeans(split_newdata$Featherweight[,-c(15,16)],centers = 2,nstart = 100)
-fviz_cluster(k2,split_newdata$Featherweight[,-c(15,16)])
-pca2<-prcomp(split_newdata$Featherweight[,-c(15,16)],scale. =T,center = T)
-new_Featherweight<-split_newdata$Featherweight[,-c(15,16)]
-new_Featherweight$cluster <- as.factor(k2$cluster)
-cluster_sig_factors(new_Featherweight,2)
-```
-
-#### Flyweight analysis
-
-```{r}
-set.seed(2023)
-#we only take the numeric variable and remove the winner variable
-fviz_nbclust(split_newdata$Flyweight[,-c(15,16)],kmeans,method='wss')
-k3<-kmeans(split_newdata$Flyweight[,-c(15,16)],centers = 2,nstart = 100)
-fviz_cluster(k3,split_newdata$Flyweight[,-c(15,16)])
-pca3<-prcomp(split_newdata$Flyweight[,-c(15,16)],scale. =T,center = T)
-new_Flyweight<-split_newdata$Flyweight[,-c(15,16)]
-new_Flyweight$cluster <- as.factor(k3$cluster)
-cluster_sig_factors(new_Flyweight,3)
-```
-
-#### Light-Heavy weight analysis
-
-```{r}
-set.seed(2023)
-#we only take the numeric variable and remove the winner variable
-fviz_nbclust(split_newdata$LightHeavyweight[,-c(15,16)],kmeans,method='wss')
-k4<-kmeans(split_newdata$LightHeavyweight[,-c(15,16)],centers = 2,nstart = 100)
-fviz_cluster(k4,split_newdata$LightHeavyweight[,-c(15,16)])
-pca4<-prcomp(split_newdata$LightHeavyweight[,-c(15,16)],scale. =T,center = T)
-new_LightHeavyweight<-split_newdata$LightHeavyweight[,-c(15,16)]
-new_LightHeavyweight$cluster <- as.factor(k4$cluster)
-cluster_sig_factors(new_LightHeavyweight,4)
-```
-
-#### Lightweight analysis
-
-```{r}
-set.seed(2023)
-#we only take the numeric variable and remove the winner variable
-fviz_nbclust(split_newdata$Lightweight[,-c(15,16)],kmeans,method='wss')
-k5<-kmeans(split_newdata$Lightweight[,-c(15,16)],centers = 2,nstart = 100)
-fviz_cluster(k5,split_newdata$Lightweight[,-c(15,16)])
-pca5<-prcomp(split_newdata$Lightweight[,-c(15,16)],scale. =T,center = T)
-new_Lightweight<-split_newdata$Lightweight[,-c(15,16)]
-new_Lightweight$cluster <- as.factor(k5$cluster)
-cluster_sig_factors(new_Lightweight,5)
-```
-
-#### Middleweight analysis
-
-```{r}
-set.seed(2023)
-#we only take the numeric variable and remove the winner variable
-fviz_nbclust(split_newdata$Middleweight[,-c(15,16)],kmeans,method='wss')
-k6<-kmeans(split_newdata$Middleweight[,-c(15,16)],centers = 2,nstart = 100)
-fviz_cluster(k6,split_newdata$Middleweight[,-c(15,16)])
-pca6<-prcomp(split_newdata$Middleweight[,-c(15,16)],scale. =T,center = T)
-new_Middleweight<-split_newdata$Middleweight[,-c(15,16)]
-new_Middleweight$cluster <- as.factor(k6$cluster)
-cluster_sig_factors(new_Middleweight,6)
-```
-
-#### Welterweight analysis
-
-```{r}
-set.seed(2023)
-#we only take the numeric variable and remove the winner variable
-fviz_nbclust(split_newdata$Welterweight[,-c(15,16)],kmeans,method='wss')
-k7<-kmeans(split_newdata$Welterweight[,-c(15,16)],centers = 2,nstart = 100)
-fviz_cluster(k7,split_newdata$Welterweight[,-c(15,16)])
-pca7<-prcomp(split_newdata$Welterweight[,-c(15,16)],scale. =T,center = T)
-new_Welterweight<-split_newdata$Welterweight[,-c(15,16)]
-new_Welterweight$cluster <- as.factor(k7$cluster)
-cluster_sig_factors(new_Welterweight,7)
-```
-
-#### Heavyweight analysis
-
-```{r}
-set.seed(2023)
-#we only take the numeric variable and remove the winner variable
-fviz_nbclust(split_newdata$Heavyweight[,-c(15,16)],kmeans,method='wss')
-k8<-kmeans(split_newdata$Heavyweight[,-c(15,16)],centers = 2,nstart = 100)
-fviz_cluster(k8,split_newdata$Heavyweight[,-c(15,16)])
-pca8<-prcomp(split_newdata$Heavyweight[,-c(15,16)],scale. =T,center = T)
-new_Heavyweight<-split_newdata$Heavyweight[,-c(15,16)]
-new_Heavyweight$cluster <- as.factor(k8$cluster)
-cluster_sig_factors(new_Heavyweight,8)
+lapply(1:8,optimal_cluster)
+lapply(1:8,clustering,num=2)
+lapply(1:8,cluster_sig_factors,num=2)
 ```
 
 Based on the plots above, we find that actually fighters in each weight class can all be separated into two clusters with exactly the same pattern.
 
 In the second plot, we can see that there are two clusters in every weight class. Take a close look at the difference of two clusters, it is obvious that fighters in cluster 1 getting more points in "*average ground strikes landed*", "*average control time*", "*average significant strikes landed*", "*avg head/distance strikes landed*", so we could conclude that fighters in cluster 1 tend to be wrestlers ("*average ground strikes landed*", "*average control time*") or volume strikers ("*average significant strikes landed*", "*avg head/body/distance strikes landed*").
 
-Fighters in cluster 2 specialize in "*average knockdown*", "*average takedown attempt", "average submission attempt*", "*average body/clinch strikes landed*". Hence we deduce that fighters in cluster 2 should be either submission artists (*"average submission attempt*", "*average takedown attempt",* "*average body/clinch strikes landed*") or heavy hitters("*average knockdown*").
+Fighters in cluster 2 specialize in "*average knockdown*", "*average takedown attempt", "average submission attempt*", "*average body/clinch strikes landed*". Hence we deduce that fighters in cluster 2 should be either submission artists (*"average submission attempt", "*average takedown attempt", "*average body/clinch strikes landed*") or heavy hitters("*average knockdown*").
 
 As for the win method, fighters in cluster 1 tend to win the fights by decision, while fighters in cluster 2 tend to win the fights by finishing their opponents, either with submission or knockout.
 
 #### Conclusion
 
 To sum up, all the fighters in eight weight classes can be separated into two groups, boring decision fighters or exciting finishers. Finishers are fighters who either have more submission attempts or more knockdowns. Boring decision fighters are fighters who prefer to control their opponents on the ground and throw some ground strikes, or fighters who love standing up and throw a lot of punches but never finish their opponents.
-
-```{r,echo=FALSE,results='hide'}
-#par(mfrow=c(11,2))
-# for(i in 1:20){
-#   y=scale(newdata[,i])
-#   x=newdata[,22]
-#   boxplot(y~x,ylab=colnames(newdata[i]),outline=F)
-# }
-
-```
-
-```{r,echo=FALSE,results='hide'}
-#corr<-data.frame(abs(cor(data1[,-c(1,2,3)])))
-# refine<-function(x){
-#   for(i in 1:nrow(x)){
-#     for(j in 1:ncol(x)){
-#       if(x[i,j]<0.5){
-#         x[i,j]=NA
-#       }
-#       
-#     }
-#   }
-#   return(x)
-#   }
-# print(refine(corr))
-
-```

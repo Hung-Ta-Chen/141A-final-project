@@ -7,6 +7,14 @@ output: html_document
 
 # Decision tree
 
+    <style type="text/css">
+    .main-container {
+      max-width: 1800px;
+      margin-left: auto;
+      margin-right: auto;
+    }
+    </style>
+
 ```{r}
 library(tidyverse)
 library(dplyr)
@@ -39,7 +47,7 @@ fit<-rpart(Winner~.,data=train,method='class')
 rpart.plot(fit, extra= 106)
 ```
 
-After setting model, we turn to check it prediction efficency. However, its accuracy of prediction is not good at all. So we try random forest and to find if there exits better model.
+After setting model, we turn to check it prediction efficiency. However, its accuracy of prediction is not good at all. So we try random forest and to find if there exits better model.
 
 ```{r}
 prediction_of_test<-predict(fit,test,method='class')
@@ -54,6 +62,26 @@ for(i in 1:nrow(test)){
 output<-table(test$Winner,result)
 accuracy<-(sum(diag(output))/sum(output))*100
 print(paste0('accuracy rate is ', round(accuracy,2) ,"%"))
+
+```
+
+After using rpart.control(), we found that the model have better prediction ability than the original one.
+
+```{r}
+accuracy_tune <- function(fit) {
+    predict_unseen <- predict(fit, test, type = 'class')
+    table_mat <- table(test$Winner, predict_unseen)
+    accuracy_Test <- sum(diag(table_mat)) / sum(table_mat)
+    accuracy_Test
+}
+
+control <- rpart.control(minsplit = 4,
+    minbucket = round(5 / 3),
+    maxdepth = 3,
+    cp = 0)
+
+tune_fit <- rpart(Winner~., data = test, method = 'class', control = control)
+accuracy_tune(tune_fit)
 
 ```
 
