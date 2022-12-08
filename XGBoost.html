@@ -374,7 +374,7 @@ display: none;
 <pre><code>## Warning: package &#39;ggplot2&#39; was built under R version 4.2.2</code></pre>
 <pre><code>## Loading required package: lattice</code></pre>
 <pre><code>## Warning: package &#39;lattice&#39; was built under R version 4.2.2</code></pre>
-<p><strong>Partition the dataset</strong></p>
+<p><strong>Split the data into training set and testing set</strong></p>
 <p>We partition the data into training set and testing set by 80:20.</p>
 <pre class="r"><code># Change the label to 0 and 1
 data[data$Winner == &quot;Blue&quot;, 1] = 0
@@ -395,117 +395,129 @@ train_set = xgb.DMatrix(data = X_train, label = Y_train)
 test_set = xgb.DMatrix(data = X_test, label = Y_test)</code></pre>
 <p><strong>Train</strong></p>
 <pre class="r"><code>watchlist &lt;- list(train=train_set, test=test_set)
-xgb_model = xgb.train(data = train_set, max.depth = 10, watchlist=watchlist, nrounds = 100)</code></pre>
-<pre><code>## [1]  train-rmse:0.413309 test-rmse:0.500912 
-## [2]  train-rmse:0.339813 test-rmse:0.507830 
-## [3]  train-rmse:0.293444 test-rmse:0.510015 
-## [4]  train-rmse:0.247605 test-rmse:0.506682 
-## [5]  train-rmse:0.220228 test-rmse:0.508498 
-## [6]  train-rmse:0.199095 test-rmse:0.512358 
-## [7]  train-rmse:0.191225 test-rmse:0.512521 
-## [8]  train-rmse:0.177849 test-rmse:0.517039 
-## [9]  train-rmse:0.143977 test-rmse:0.520390 
-## [10] train-rmse:0.133244 test-rmse:0.519970 
-## [11] train-rmse:0.121709 test-rmse:0.521814 
-## [12] train-rmse:0.110678 test-rmse:0.520732 
-## [13] train-rmse:0.104327 test-rmse:0.520303 
-## [14] train-rmse:0.093634 test-rmse:0.519557 
-## [15] train-rmse:0.079213 test-rmse:0.521205 
-## [16] train-rmse:0.070754 test-rmse:0.520769 
-## [17] train-rmse:0.063512 test-rmse:0.521249 
-## [18] train-rmse:0.058960 test-rmse:0.521477 
-## [19] train-rmse:0.056426 test-rmse:0.522384 
-## [20] train-rmse:0.052559 test-rmse:0.521912 
-## [21] train-rmse:0.046374 test-rmse:0.523047 
-## [22] train-rmse:0.043937 test-rmse:0.522297 
-## [23] train-rmse:0.040127 test-rmse:0.521805 
-## [24] train-rmse:0.034108 test-rmse:0.521515 
-## [25] train-rmse:0.032012 test-rmse:0.521763 
-## [26] train-rmse:0.028145 test-rmse:0.521372 
-## [27] train-rmse:0.025906 test-rmse:0.521581 
-## [28] train-rmse:0.022891 test-rmse:0.521754 
-## [29] train-rmse:0.020991 test-rmse:0.521404 
-## [30] train-rmse:0.019642 test-rmse:0.521382 
-## [31] train-rmse:0.018475 test-rmse:0.521463 
-## [32] train-rmse:0.017583 test-rmse:0.521396 
-## [33] train-rmse:0.015337 test-rmse:0.521227 
-## [34] train-rmse:0.013984 test-rmse:0.521254 
-## [35] train-rmse:0.012585 test-rmse:0.521505 
-## [36] train-rmse:0.011899 test-rmse:0.521405 
-## [37] train-rmse:0.010312 test-rmse:0.521320 
-## [38] train-rmse:0.008967 test-rmse:0.521299 
-## [39] train-rmse:0.007773 test-rmse:0.521249 
-## [40] train-rmse:0.006993 test-rmse:0.521250 
-## [41] train-rmse:0.006817 test-rmse:0.521209 
-## [42] train-rmse:0.006364 test-rmse:0.521246 
-## [43] train-rmse:0.006051 test-rmse:0.521305 
-## [44] train-rmse:0.005323 test-rmse:0.521461 
-## [45] train-rmse:0.004715 test-rmse:0.521423 
-## [46] train-rmse:0.004253 test-rmse:0.521516 
-## [47] train-rmse:0.004010 test-rmse:0.521551 
-## [48] train-rmse:0.003419 test-rmse:0.521563 
-## [49] train-rmse:0.003285 test-rmse:0.521573 
-## [50] train-rmse:0.002801 test-rmse:0.521614 
-## [51] train-rmse:0.002572 test-rmse:0.521581 
-## [52] train-rmse:0.002398 test-rmse:0.521576 
-## [53] train-rmse:0.002120 test-rmse:0.521627 
-## [54] train-rmse:0.001987 test-rmse:0.521623 
-## [55] train-rmse:0.001693 test-rmse:0.521585 
-## [56] train-rmse:0.001542 test-rmse:0.521606 
-## [57] train-rmse:0.001423 test-rmse:0.521599 
-## [58] train-rmse:0.001262 test-rmse:0.521547 
-## [59] train-rmse:0.001176 test-rmse:0.521537 
-## [60] train-rmse:0.001004 test-rmse:0.521518 
-## [61] train-rmse:0.000905 test-rmse:0.521522 
-## [62] train-rmse:0.000868 test-rmse:0.521517 
-## [63] train-rmse:0.000819 test-rmse:0.521520 
-## [64] train-rmse:0.000745 test-rmse:0.521507 
-## [65] train-rmse:0.000745 test-rmse:0.521507 
-## [66] train-rmse:0.000745 test-rmse:0.521507 
-## [67] train-rmse:0.000745 test-rmse:0.521507 
-## [68] train-rmse:0.000745 test-rmse:0.521507 
-## [69] train-rmse:0.000745 test-rmse:0.521507 
-## [70] train-rmse:0.000745 test-rmse:0.521507 
-## [71] train-rmse:0.000745 test-rmse:0.521507 
-## [72] train-rmse:0.000745 test-rmse:0.521507 
-## [73] train-rmse:0.000745 test-rmse:0.521507 
-## [74] train-rmse:0.000745 test-rmse:0.521507 
-## [75] train-rmse:0.000745 test-rmse:0.521507 
-## [76] train-rmse:0.000745 test-rmse:0.521507 
-## [77] train-rmse:0.000745 test-rmse:0.521507 
-## [78] train-rmse:0.000745 test-rmse:0.521507 
-## [79] train-rmse:0.000745 test-rmse:0.521507 
-## [80] train-rmse:0.000745 test-rmse:0.521507 
-## [81] train-rmse:0.000745 test-rmse:0.521507 
-## [82] train-rmse:0.000745 test-rmse:0.521507 
-## [83] train-rmse:0.000745 test-rmse:0.521507 
-## [84] train-rmse:0.000745 test-rmse:0.521507 
-## [85] train-rmse:0.000745 test-rmse:0.521507 
-## [86] train-rmse:0.000745 test-rmse:0.521507 
-## [87] train-rmse:0.000745 test-rmse:0.521507 
-## [88] train-rmse:0.000745 test-rmse:0.521507 
-## [89] train-rmse:0.000745 test-rmse:0.521507 
-## [90] train-rmse:0.000745 test-rmse:0.521507 
-## [91] train-rmse:0.000745 test-rmse:0.521507 
-## [92] train-rmse:0.000745 test-rmse:0.521507 
-## [93] train-rmse:0.000745 test-rmse:0.521507 
-## [94] train-rmse:0.000745 test-rmse:0.521507 
-## [95] train-rmse:0.000745 test-rmse:0.521507 
-## [96] train-rmse:0.000745 test-rmse:0.521507 
-## [97] train-rmse:0.000745 test-rmse:0.521507 
-## [98] train-rmse:0.000745 test-rmse:0.521507 
-## [99] train-rmse:0.000745 test-rmse:0.521507 
-## [100]    train-rmse:0.000745 test-rmse:0.521507</code></pre>
+xgb_model = xgb.train(data = train_set, max.depth = 4, watchlist=watchlist, nrounds = 100)</code></pre>
+<pre><code>## [1]  train-rmse:0.481466 test-rmse:0.491153 
+## [2]  train-rmse:0.464611 test-rmse:0.493160 
+## [3]  train-rmse:0.451435 test-rmse:0.497149 
+## [4]  train-rmse:0.442945 test-rmse:0.495660 
+## [5]  train-rmse:0.433650 test-rmse:0.497218 
+## [6]  train-rmse:0.427987 test-rmse:0.495432 
+## [7]  train-rmse:0.424372 test-rmse:0.494637 
+## [8]  train-rmse:0.416492 test-rmse:0.495528 
+## [9]  train-rmse:0.411344 test-rmse:0.494831 
+## [10] train-rmse:0.403337 test-rmse:0.494749 
+## [11] train-rmse:0.395590 test-rmse:0.497448 
+## [12] train-rmse:0.390543 test-rmse:0.497977 
+## [13] train-rmse:0.384842 test-rmse:0.496098 
+## [14] train-rmse:0.381992 test-rmse:0.495892 
+## [15] train-rmse:0.380694 test-rmse:0.496135 
+## [16] train-rmse:0.376792 test-rmse:0.495427 
+## [17] train-rmse:0.371617 test-rmse:0.494548 
+## [18] train-rmse:0.364101 test-rmse:0.496921 
+## [19] train-rmse:0.359840 test-rmse:0.496154 
+## [20] train-rmse:0.356268 test-rmse:0.497435 
+## [21] train-rmse:0.350484 test-rmse:0.496267 
+## [22] train-rmse:0.345750 test-rmse:0.497346 
+## [23] train-rmse:0.341847 test-rmse:0.498603 
+## [24] train-rmse:0.337789 test-rmse:0.501668 
+## [25] train-rmse:0.331722 test-rmse:0.502565 
+## [26] train-rmse:0.324512 test-rmse:0.500588 
+## [27] train-rmse:0.322738 test-rmse:0.501073 
+## [28] train-rmse:0.317897 test-rmse:0.501336 
+## [29] train-rmse:0.316648 test-rmse:0.501783 
+## [30] train-rmse:0.312338 test-rmse:0.503545 
+## [31] train-rmse:0.310738 test-rmse:0.504087 
+## [32] train-rmse:0.304900 test-rmse:0.505867 
+## [33] train-rmse:0.301421 test-rmse:0.505619 
+## [34] train-rmse:0.295733 test-rmse:0.507129 
+## [35] train-rmse:0.292576 test-rmse:0.509197 
+## [36] train-rmse:0.289632 test-rmse:0.509517 
+## [37] train-rmse:0.286091 test-rmse:0.510463 
+## [38] train-rmse:0.281161 test-rmse:0.509558 
+## [39] train-rmse:0.279986 test-rmse:0.510339 
+## [40] train-rmse:0.277882 test-rmse:0.511940 
+## [41] train-rmse:0.276342 test-rmse:0.513030 
+## [42] train-rmse:0.274225 test-rmse:0.513866 
+## [43] train-rmse:0.268858 test-rmse:0.512875 
+## [44] train-rmse:0.267745 test-rmse:0.513032 
+## [45] train-rmse:0.264456 test-rmse:0.513874 
+## [46] train-rmse:0.260420 test-rmse:0.515952 
+## [47] train-rmse:0.256091 test-rmse:0.517553 
+## [48] train-rmse:0.254940 test-rmse:0.517002 
+## [49] train-rmse:0.250920 test-rmse:0.517440 
+## [50] train-rmse:0.246718 test-rmse:0.518603 
+## [51] train-rmse:0.244504 test-rmse:0.518876 
+## [52] train-rmse:0.241255 test-rmse:0.520470 
+## [53] train-rmse:0.239298 test-rmse:0.520887 
+## [54] train-rmse:0.237286 test-rmse:0.519584 
+## [55] train-rmse:0.234853 test-rmse:0.520598 
+## [56] train-rmse:0.232483 test-rmse:0.520321 
+## [57] train-rmse:0.230894 test-rmse:0.521204 
+## [58] train-rmse:0.227739 test-rmse:0.522477 
+## [59] train-rmse:0.227130 test-rmse:0.522585 
+## [60] train-rmse:0.225057 test-rmse:0.522676 
+## [61] train-rmse:0.222452 test-rmse:0.523325 
+## [62] train-rmse:0.221641 test-rmse:0.524233 
+## [63] train-rmse:0.219240 test-rmse:0.524317 
+## [64] train-rmse:0.218460 test-rmse:0.524173 
+## [65] train-rmse:0.217314 test-rmse:0.524134 
+## [66] train-rmse:0.215950 test-rmse:0.523127 
+## [67] train-rmse:0.214181 test-rmse:0.523552 
+## [68] train-rmse:0.210635 test-rmse:0.524959 
+## [69] train-rmse:0.208324 test-rmse:0.525626 
+## [70] train-rmse:0.205630 test-rmse:0.525687 
+## [71] train-rmse:0.204164 test-rmse:0.524912 
+## [72] train-rmse:0.201718 test-rmse:0.526800 
+## [73] train-rmse:0.199021 test-rmse:0.527894 
+## [74] train-rmse:0.196296 test-rmse:0.526726 
+## [75] train-rmse:0.193158 test-rmse:0.526513 
+## [76] train-rmse:0.190311 test-rmse:0.527097 
+## [77] train-rmse:0.187105 test-rmse:0.529995 
+## [78] train-rmse:0.183248 test-rmse:0.528047 
+## [79] train-rmse:0.180306 test-rmse:0.528174 
+## [80] train-rmse:0.178179 test-rmse:0.528335 
+## [81] train-rmse:0.175652 test-rmse:0.527559 
+## [82] train-rmse:0.173774 test-rmse:0.528130 
+## [83] train-rmse:0.171988 test-rmse:0.527982 
+## [84] train-rmse:0.169362 test-rmse:0.528899 
+## [85] train-rmse:0.167205 test-rmse:0.528234 
+## [86] train-rmse:0.164888 test-rmse:0.528535 
+## [87] train-rmse:0.162266 test-rmse:0.528770 
+## [88] train-rmse:0.159532 test-rmse:0.530422 
+## [89] train-rmse:0.158648 test-rmse:0.530693 
+## [90] train-rmse:0.157768 test-rmse:0.531909 
+## [91] train-rmse:0.155344 test-rmse:0.531116 
+## [92] train-rmse:0.153750 test-rmse:0.531133 
+## [93] train-rmse:0.152293 test-rmse:0.530886 
+## [94] train-rmse:0.151422 test-rmse:0.532064 
+## [95] train-rmse:0.151082 test-rmse:0.532226 
+## [96] train-rmse:0.149074 test-rmse:0.532664 
+## [97] train-rmse:0.147779 test-rmse:0.533300 
+## [98] train-rmse:0.146648 test-rmse:0.533882 
+## [99] train-rmse:0.146369 test-rmse:0.533798 
+## [100]    train-rmse:0.144961 test-rmse:0.534627</code></pre>
 <p><strong>Get the finalized model</strong></p>
 <p>From the training process above, we can see that the model started to
 overfit after the 4th round. Therefore, we set the training round to 4
 in our finalized model.</p>
-<pre class="r"><code>xgb_model_final = xgb.train(data = train_set, max.depth = 10, watchlist=watchlist, nrounds = 4)</code></pre>
-<pre><code>## [1]  train-rmse:0.413309 test-rmse:0.500912 
-## [2]  train-rmse:0.339813 test-rmse:0.507830 
-## [3]  train-rmse:0.293444 test-rmse:0.510015 
-## [4]  train-rmse:0.247605 test-rmse:0.506682</code></pre>
-<p><strong>Prediction on training set to check accuracy</strong></p>
+<pre class="r"><code>xgb_model_final = xgb.train(data = train_set, max.depth = 4, watchlist=watchlist, nrounds = 16)</code></pre>
+<pre><code>## [1]  train-rmse:0.481466 test-rmse:0.491153 
+## [2]  train-rmse:0.464611 test-rmse:0.493160 
+## [3]  train-rmse:0.451435 test-rmse:0.497149 
+## [4]  train-rmse:0.442945 test-rmse:0.495660 
+## [5]  train-rmse:0.433650 test-rmse:0.497218 
+## [6]  train-rmse:0.427987 test-rmse:0.495432 
+## [7]  train-rmse:0.424372 test-rmse:0.494637 
+## [8]  train-rmse:0.416492 test-rmse:0.495528 
+## [9]  train-rmse:0.411344 test-rmse:0.494831 
+## [10] train-rmse:0.403337 test-rmse:0.494749 
+## [11] train-rmse:0.395590 test-rmse:0.497448 
+## [12] train-rmse:0.390543 test-rmse:0.497977 
+## [13] train-rmse:0.384842 test-rmse:0.496098 
+## [14] train-rmse:0.381992 test-rmse:0.495892 
+## [15] train-rmse:0.380694 test-rmse:0.496135 
+## [16] train-rmse:0.376792 test-rmse:0.495427</code></pre>
+<p><strong>Predict</strong></p>
 <pre class="r"><code># Wrapper func for predict()
 xgb_predict = function(model, test_set){
   pred = predict(model, test_set)
@@ -526,8 +538,8 @@ cat(sprintf(&quot;Training accuracy: %f\n&quot;, acc))
 pred_test = xgb_predict(xgb_model_final, test_set)
 acc_test = accuracy(Y_test, pred_test)
 cat(sprintf(&quot;Testing accuracy: %f\n&quot;, acc_test))</code></pre>
-<pre><code>## Training accuracy: 0.989409
-## Testing accuracy: 0.585106</code></pre>
+<pre><code>## Training accuracy: 0.856134
+## Testing accuracy: 0.588652</code></pre>
 
 
 

@@ -50,7 +50,7 @@ test_set = xgb.DMatrix(data = X_test, label = Y_test)
 
 ```{r, results='hold'}
 watchlist <- list(train=train_set, test=test_set)
-xgb_model = xgb.train(data = train_set, max.depth = 10, watchlist=watchlist, nrounds = 100)
+xgb_model = xgb.train(data = train_set, max.depth = 4, watchlist=watchlist, nrounds = 100)
 ```
 
 **Get the finalized model**
@@ -58,7 +58,7 @@ xgb_model = xgb.train(data = train_set, max.depth = 10, watchlist=watchlist, nro
 From the training process above, we can see that the model started to overfit after the 4th round. Therefore, we set the training round to 4 in our finalized model.
 
 ```{r}
-xgb_model_final = xgb.train(data = train_set, max.depth = 10, watchlist=watchlist, nrounds = 4)
+xgb_model_final = xgb.train(data = train_set, max.depth = 4, watchlist=watchlist, nrounds = 16)
 ```
 
 **Predict**
